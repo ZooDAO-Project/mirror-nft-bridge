@@ -3,6 +3,7 @@ import { anyValue } from '@nomicfoundation/hardhat-chai-matchers/withArgs'
 import { NFTCopyDeployedEvent } from '../../typechain-types/contracts/Bridge'
 import { bridgeBackScenario, TxReturnType, simpleBridgeScenario, getAdapterParamsAndFeesAmount } from './_.fixtures'
 import { ethers } from 'hardhat'
+import { ContractTransaction } from 'ethers'
 
 export const receive = function () {
 	describe('if bridged to original chain', function () {
@@ -142,14 +143,7 @@ export const receive = function () {
 		const { tx, target, nft, owner, tokenId } = await simpleBridgeScenario()
 
 		await expect(tx)
-			.to.emit(target, 'MessageReceived')
-			.withArgs(
-				nft.address,
-				await nft.name(),
-				await nft.symbol(),
-				tokenId,
-				await nft.tokenURI(tokenId),
-				owner.address
-			)
+			.to.emit(target, 'NFTBridged')
+			.withArgs(nft.address, tokenId, await nft.tokenURI(tokenId), owner.address)
 	})
 }

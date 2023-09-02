@@ -16,7 +16,7 @@ export const bridge = function () {
 			const { source, target, copy, nft, tx, owner, tokenId } = await bridgeBackScenario()
 
 			await expect(tx)
-				.to.emit(source, 'MessageSend')
+				.to.emit(source, 'BridgeNFT')
 				.withArgs(
 					nft.address,
 					await copy.name(),
@@ -26,16 +26,7 @@ export const bridge = function () {
 					owner.address
 				)
 
-			await expect(tx)
-				.to.emit(target, 'MessageReceived')
-				.withArgs(
-					nft.address,
-					await copy.name(),
-					await copy.symbol(),
-					tokenId,
-					await nft.tokenURI(tokenId),
-					owner.address
-				)
+			await expect(tx).to.emit(target, 'NFTReturned').withArgs(nft.address, tokenId, owner.address)
 		})
 	})
 
@@ -78,7 +69,7 @@ export const bridge = function () {
 		const { nft, owner, tokenId, tx, source } = await simpleBridgeScenario()
 
 		await expect(tx)
-			.to.emit(source, 'MessageSend')
+			.to.emit(source, 'BridgeNFT')
 			.withArgs(
 				nft.address,
 				await nft.name(),
@@ -93,14 +84,7 @@ export const bridge = function () {
 		const { nft, owner, tokenId, tx, target } = await simpleBridgeScenario()
 
 		await expect(tx)
-			.to.emit(target, 'MessageReceived')
-			.withArgs(
-				nft.address,
-				await nft.name(),
-				await nft.symbol(),
-				tokenId,
-				await nft.tokenURI(tokenId),
-				owner.address
-			)
+			.to.emit(target, 'NFTBridged')
+			.withArgs(nft.address, tokenId, await nft.tokenURI(tokenId), owner.address)
 	})
 }

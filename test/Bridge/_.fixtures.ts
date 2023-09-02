@@ -44,7 +44,8 @@ export async function deployNFTWithMint() {
 	const signers = await ethers.getSigners()
 	const owner = signers[0]
 	await nft.mint(owner.address, 1)
-	return { nft, signers, owner }
+	const tokenId = 1
+	return { nft, signers, owner, tokenId }
 }
 
 // First time bridging collection
