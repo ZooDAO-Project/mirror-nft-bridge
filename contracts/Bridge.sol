@@ -16,9 +16,6 @@ contract Bridge is NonblockingLzApp, NftFactory, IBridge, IERC721Receiver {
 
 	mapping(address => bool) original;
 
-	// targetNetworkId => trustedRemote
-	mapping(uint256 => address) public trustedRemote;
-
 	mapping(address => bool) public isOriginalChainForCollection;
 
 	/* EVENTS */
@@ -30,16 +27,7 @@ contract Bridge is NonblockingLzApp, NftFactory, IBridge, IERC721Receiver {
 
 	event TrustedRemoteSet(uint256 targetNetworkId, address trustedRemote);
 
-	event MessageSend(address collection, string name, string symbol, uint256 tokenId, string tokenURI, address owner);
-
-	event MessageReceived(
-		address collection,
-		string name,
-		string symbol,
-		uint256 tokenId,
-		string tokenURI,
-		address owner
-	);
+	event BridgeNFT(address collection, string name, string symbol, uint256 tokenId, string tokenURI, address owner);
 
 	constructor(address _lzEndpoint) NonblockingLzApp(_lzEndpoint) {}
 
@@ -74,7 +62,6 @@ contract Bridge is NonblockingLzApp, NftFactory, IBridge, IERC721Receiver {
 	) public payable {
 		zONFT collection = zONFT(collectionAddr);
 
-		address target = address(bytes20(getTrustedRemote(targetNetworkId)));
 		string memory name = collection.name();
 		string memory symbol = collection.symbol();
 		string memory tokenURI = collection.tokenURI(tokenId);
@@ -99,9 +86,7 @@ contract Bridge is NonblockingLzApp, NftFactory, IBridge, IERC721Receiver {
 
 		_lzSend(targetNetworkId, _payload, _refundAddress, _zroPaymentAddress, _adapterParams, msg.value);
 
-		// IBridge(target).lzReceive(originalCollectionAddress, name, symbol, tokenId, tokenURI, msg.sender);
-
-		emit MessageSend(originalCollectionAddress, name, symbol, tokenId, tokenURI, msg.sender);
+		emit BridgeNFT(originalCollectionAddress, name, symbol, tokenId, tokenURI, msg.sender);
 	}
 
 	function getTrustedRemote(uint16 _remoteChainId) public view returns (bytes memory) {
@@ -110,12 +95,7 @@ contract Bridge is NonblockingLzApp, NftFactory, IBridge, IERC721Receiver {
 		return path.slice(0, path.length - 20); // the last 20 bytes should be address(this)
 	}
 
-	function _nonblockingLzReceive(
-		uint16 _srcChainId,
-		bytes memory _srcAddress,
-		uint64 _nonce,
-		bytes memory _payload
-	) internal virtual override {
+	function _nonblockingLzReceive(uint16, bytes memory, uint64, bytes memory _payload) internal virtual override {
 		(
 			address originalCollectionAddr,
 			string memory name,
@@ -159,7 +139,7 @@ contract Bridge is NonblockingLzApp, NftFactory, IBridge, IERC721Receiver {
 			emit NFTBridged(originalCollectionAddr, tokenId, tokenURI, _owner);
 		}
 
-		emit MessageReceived(originalCollectionAddr, name, symbol, tokenId, tokenURI, _owner);
+		// emit MessageReceived(originalCollectionAddr, name, symbol, tokenId, tokenURI, _owner);
 	}
 
 	/**
