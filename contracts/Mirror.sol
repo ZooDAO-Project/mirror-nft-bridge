@@ -2,10 +2,8 @@
 
 pragma solidity 0.8.18;
 
-import '@openzeppelin/contracts/access/Ownable.sol';
 import './ReflectionCreator.sol';
 import '@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol';
-import '@layerzerolabs/solidity-examples/contracts/token/onft/ONFT721Core.sol';
 import '@layerzerolabs/solidity-examples/contracts/lzApp/NonblockingLzApp.sol';
 import './FeeTaker.sol';
 
