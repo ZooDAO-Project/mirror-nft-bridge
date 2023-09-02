@@ -25,8 +25,8 @@ abstract contract NftFactory {
 
 	function _deployNewNft(
 		address originalCollectionAddr,
-		string calldata name,
-		string calldata symbol
+		string memory name,
+		string memory symbol
 	) internal returns (address) {
 		zONFT nft = new zONFT(name, symbol);
 

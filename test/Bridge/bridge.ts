@@ -2,6 +2,7 @@ import { loadFixture } from '@nomicfoundation/hardhat-network-helpers'
 import { expect } from 'chai'
 import { expectToBeRevertedWith } from '../_utils'
 import { bridgeBackScenario, TxReturnType, simpleBridgeScenario, deployBridge, deployNFTWithMint } from './_.fixtures'
+import { ethers } from 'hardhat'
 
 export const bridge = function () {
 	describe('if collection is copy', function () {
@@ -50,10 +51,17 @@ export const bridge = function () {
 
 			it(`doesn't transfer without approve`, async function () {
 				const { source, targetNetworkId } = await loadFixture(deployBridge)
-				const { nft } = await loadFixture(deployNFTWithMint)
+				const { nft, owner } = await loadFixture(deployNFTWithMint)
 
 				const tokenId = 1
-				const tx = source.bridge(nft.address, tokenId, targetNetworkId)
+				const tx = source.bridge(
+					nft.address,
+					tokenId,
+					targetNetworkId,
+					owner.address,
+					ethers.constants.AddressZero,
+					'0x'
+				)
 
 				await expectToBeRevertedWith(tx, 'ERC721: caller is not token owner or approved')
 			})
@@ -94,27 +102,5 @@ export const bridge = function () {
 				await nft.tokenURI(tokenId),
 				owner.address
 			)
-	})
-
-	xit(`multiple bridges to check gas expenditure for first and following tx hardness`, async function () {
-		const { source, targetNetworkId } = await loadFixture(deployBridge)
-		const { nft, signers } = await loadFixture(deployNFTWithMint)
-
-		const owner = signers[0].address
-		const tokenId = 1
-
-		await nft.mint(owner, 1)
-		await nft.mint(owner, 1)
-		await nft.mint(owner, 1)
-
-		await nft.approve(source.address, tokenId)
-		await nft.approve(source.address, tokenId + 1)
-		await nft.approve(source.address, tokenId + 2)
-		await nft.approve(source.address, tokenId + 3)
-
-		await source.bridge(nft.address, tokenId, targetNetworkId)
-		await source.bridge(nft.address, tokenId + 1, targetNetworkId)
-		await source.bridge(nft.address, tokenId + 2, targetNetworkId)
-		await source.bridge(nft.address, tokenId + 3, targetNetworkId)
 	})
 }

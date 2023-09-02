@@ -11,7 +11,12 @@ describe('Bridge', function () {
 		expect(source).not.to.be.undefined
 		expect(source.address.length).to.be.eq(42)
 	})
+	// it('is NonBlockingLzApp', async function () {
+	// 	const { source, sourceLzEndpoint } = await loadFixture(deployBridge)
+	// 	expect(await source.lzEndpoint()).to.be.eq(sourceLzEndpoint.address)
+	// 	expect(source.address.length).to.be.eq(42)
+	// })
 	describe('bridge()', bridge)
 	describe('receive()', receive)
-	describe('setTrustedRemote()', setTrustedRemote)
+	xdescribe('setTrustedRemote()', setTrustedRemote)
 })

@@ -9,7 +9,11 @@ import '@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol';
 import '@layerzerolabs/solidity-examples/contracts/token/onft/ONFT721Core.sol';
 import '@layerzerolabs/solidity-examples/contracts/lzApp/NonblockingLzApp.sol';
 
-contract Bridge is NftFactory, IBridge, IERC721Receiver, Ownable {
+contract Bridge is NonblockingLzApp, NftFactory, IBridge, IERC721Receiver {
+	uint16 public constant FUNCTION_TYPE_SEND = 1;
+
+	using BytesLib for bytes;
+
 	mapping(address => bool) original;
 
 	// targetNetworkId => trustedRemote
@@ -37,12 +41,40 @@ contract Bridge is NftFactory, IBridge, IERC721Receiver, Ownable {
 		address owner
 	);
 
-	// constructor(address _lzEndpoint) NonblockingLzApp(_lzEndpoint) {}
+	constructor(address _lzEndpoint) NonblockingLzApp(_lzEndpoint) {}
 
-	function bridge(address collectionAddr, uint256 tokenId, uint256 targetNetworkId) public {
+	function estimateSendFee(
+		uint16 _dstChainId,
+		bytes memory _toAddress,
+		uint _tokenId,
+		bool _useZro,
+		bytes memory _adapterParams
+	) public view returns (uint nativeFee, uint zroFee) {
+		return estimateSendBatchFee(_dstChainId, _toAddress, _toSingletonArray(_tokenId), _useZro, _adapterParams);
+	}
+
+	function estimateSendBatchFee(
+		uint16 _dstChainId,
+		bytes memory _toAddress,
+		uint[] memory _tokenIds,
+		bool _useZro,
+		bytes memory _adapterParams
+	) public view returns (uint nativeFee, uint zroFee) {
+		bytes memory payload = abi.encode(_toAddress, _tokenIds);
+		return lzEndpoint.estimateFees(_dstChainId, address(this), payload, _useZro, _adapterParams);
+	}
+
+	function bridge(
+		address collectionAddr,
+		uint256 tokenId,
+		uint16 targetNetworkId,
+		address payable _refundAddress,
+		address _zroPaymentAddress,
+		bytes memory _adapterParams
+	) public payable {
 		zONFT collection = zONFT(collectionAddr);
 
-		address target = trustedRemote[targetNetworkId];
+		address target = address(bytes20(getTrustedRemote(targetNetworkId)));
 		string memory name = collection.name();
 		string memory symbol = collection.symbol();
 		string memory tokenURI = collection.tokenURI(tokenId);
@@ -61,19 +93,49 @@ contract Bridge is NftFactory, IBridge, IERC721Receiver, Ownable {
 			originalCollectionAddress = collectionAddr;
 		}
 
-		IBridge(target).lzReceive(originalCollectionAddress, name, symbol, tokenId, tokenURI, msg.sender);
+		bytes memory _payload = abi.encode(originalCollectionAddress, name, symbol, tokenId, tokenURI, msg.sender);
+
+		_checkGasLimit(targetNetworkId, FUNCTION_TYPE_SEND, _adapterParams, 1500000);
+
+		_lzSend(targetNetworkId, _payload, _refundAddress, _zroPaymentAddress, _adapterParams, msg.value);
+
+		// IBridge(target).lzReceive(originalCollectionAddress, name, symbol, tokenId, tokenURI, msg.sender);
 
 		emit MessageSend(originalCollectionAddress, name, symbol, tokenId, tokenURI, msg.sender);
 	}
 
-	function lzReceive(
+	function getTrustedRemote(uint16 _remoteChainId) public view returns (bytes memory) {
+		bytes memory path = trustedRemoteLookup[_remoteChainId];
+		require(path.length != 0, 'LzApp: no trusted path record');
+		return path.slice(0, path.length - 20); // the last 20 bytes should be address(this)
+	}
+
+	function _nonblockingLzReceive(
+		uint16 _srcChainId,
+		bytes memory _srcAddress,
+		uint64 _nonce,
+		bytes memory _payload
+	) internal virtual override {
+		(
+			address originalCollectionAddr,
+			string memory name,
+			string memory symbol,
+			uint256 tokenId,
+			string memory tokenURI,
+			address _owner
+		) = abi.decode(_payload, (address, string, string, uint256, string, address));
+
+		_receive(originalCollectionAddr, name, symbol, tokenId, tokenURI, _owner);
+	}
+
+	function _receive(
 		address originalCollectionAddr,
-		string calldata name,
-		string calldata symbol,
+		string memory name,
+		string memory symbol,
 		uint256 tokenId,
-		string calldata tokenURI,
+		string memory tokenURI,
 		address _owner
-	) public {
+	) internal {
 		bool isOriginalChain = isOriginalChainForCollection[originalCollectionAddr];
 
 		if (isOriginalChain) {
@@ -100,12 +162,6 @@ contract Bridge is NftFactory, IBridge, IERC721Receiver, Ownable {
 		emit MessageReceived(originalCollectionAddr, name, symbol, tokenId, tokenURI, _owner);
 	}
 
-	function setTrustedRemote(uint256 targetNetworkId, address trustedRemoteAddr) public onlyOwner {
-		trustedRemote[targetNetworkId] = trustedRemoteAddr;
-
-		emit TrustedRemoteSet(targetNetworkId, trustedRemoteAddr);
-	}
-
 	/**
 	 * @dev Whenever an {IERC721} `tokenId` token is transferred to this contract via {IERC721-safeTransferFrom}
 	 * by `operator` from `from`, this function is called.
@@ -123,5 +179,11 @@ contract Bridge is NftFactory, IBridge, IERC721Receiver, Ownable {
 	) external returns (bytes4) {
 		emit NFTReceived(operator, from, tokenId, data);
 		return IERC721Receiver.onERC721Received.selector;
+	}
+
+	function _toSingletonArray(uint element) internal pure returns (uint[] memory) {
+		uint[] memory array = new uint[](1);
+		array[0] = element;
+		return array;
 	}
 }

@@ -1,26 +1,42 @@
 import { loadFixture } from '@nomicfoundation/hardhat-network-helpers'
 import { ethers } from 'hardhat'
-import { Bridge__factory, ZONFT } from '../../typechain-types'
+import {
+	Bridge,
+	Bridge__factory,
+	LZEndpointMock,
+	LZEndpointMock__factory,
+	NFT,
+	ONFT721,
+	ZONFT,
+} from '../../typechain-types'
 import { deployNFT } from '../NFT/_'
+import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
 
 export async function deployBridge() {
 	const Bridge = (await ethers.getContractFactory('Bridge')) as Bridge__factory
-
-	const source = await Bridge.deploy()
-	const target = await Bridge.deploy()
-
-	await source.deployed()
-	await target.deployed()
+	const LzEndpointMock = (await ethers.getContractFactory('LZEndpointMock')) as LZEndpointMock__factory
 
 	const sourceNetworkId = 101 // LZ network ID - ethereum
 	const targetNetworkId = 126 // LZ network ID - moonbeam
 
-	await source.setTrustedRemote(targetNetworkId, target.address)
-	await target.setTrustedRemote(sourceNetworkId, source.address)
+	const sourceLzEndpoint = await LzEndpointMock.deploy(sourceNetworkId)
+	const targetLzEndpoint = await LzEndpointMock.deploy(targetNetworkId)
+
+	const source = await Bridge.deploy(sourceLzEndpoint.address)
+	const target = await Bridge.deploy(targetLzEndpoint.address)
+
+	await source.deployed()
+	await target.deployed()
+
+	await sourceLzEndpoint.setDestLzEndpoint(target.address, targetLzEndpoint.address)
+	await targetLzEndpoint.setDestLzEndpoint(source.address, sourceLzEndpoint.address)
+
+	await source.setTrustedRemoteAddress(targetNetworkId, target.address)
+	await target.setTrustedRemoteAddress(sourceNetworkId, source.address)
 
 	const signers = await ethers.getSigners()
 
-	return { source, target, sourceNetworkId, targetNetworkId, signers }
+	return { source, target, sourceLzEndpoint, targetLzEndpoint, sourceNetworkId, targetNetworkId, signers }
 }
 
 export async function deployNFTWithMint() {
@@ -35,7 +51,7 @@ export async function deployNFTWithMint() {
 // from ethereum (source) to moonbeam (target)
 // Deploys new copy contract on target chain
 export async function simpleBridgeScenario(txReturnType: TxReturnType = TxReturnType.awaited) {
-	const { source, target, targetNetworkId } = await loadFixture(deployBridge)
+	const { source, target, targetNetworkId, sourceLzEndpoint, targetLzEndpoint } = await loadFixture(deployBridge)
 	const { nft, signers, owner } = await loadFixture(deployNFTWithMint)
 
 	const tokenId = 1
@@ -43,15 +59,55 @@ export async function simpleBridgeScenario(txReturnType: TxReturnType = TxReturn
 
 	let tx
 
+	const { fees, adapterParams } = await getAdapterParamsAndFeesAmount(
+		nft,
+		tokenId,
+		owner,
+		targetNetworkId,
+		source,
+		sourceLzEndpoint
+	)
+
 	switch (txReturnType) {
 		case TxReturnType.awaited:
-			tx = await source.bridge(nft.address, tokenId, targetNetworkId)
+			tx = await source.bridge(
+				nft.address,
+				tokenId,
+				targetNetworkId,
+				owner.address,
+				ethers.constants.AddressZero,
+				adapterParams,
+				{
+					value: fees[0],
+				}
+			)
 			break
 		case TxReturnType.unawaited:
-			tx = source.bridge(nft.address, tokenId, targetNetworkId)
+			tx = source.bridge(
+				nft.address,
+				tokenId,
+				targetNetworkId,
+				owner.address,
+				ethers.constants.AddressZero,
+				adapterParams,
+				{
+					value: fees[0],
+				}
+			)
 			break
 		case TxReturnType.arrowFunction:
-			tx = () => source.bridge(nft.address, tokenId, targetNetworkId)
+			tx = () =>
+				source.bridge(
+					nft.address,
+					tokenId,
+					targetNetworkId,
+					owner.address,
+					ethers.constants.AddressZero,
+					adapterParams,
+					{
+						value: fees[0],
+					}
+				)
 	}
 
 	const copyAddr = await target.copy(nft.address)
@@ -59,7 +115,19 @@ export async function simpleBridgeScenario(txReturnType: TxReturnType = TxReturn
 	const zONFT = await ethers.getContractFactory('zONFT')
 	const copy = zONFT.attach(copyAddr) as ZONFT
 
-	return { source, target, nft, copy, tx, signers, owner, tokenId, targetNetworkId }
+	return {
+		source,
+		target,
+		nft,
+		copy,
+		tx,
+		signers,
+		owner,
+		tokenId,
+		targetNetworkId,
+		sourceLzEndpoint,
+		targetLzEndpoint,
+	}
 }
 
 export enum TxReturnType {
@@ -67,19 +135,60 @@ export enum TxReturnType {
 	unawaited,
 	arrowFunction,
 }
+
+export async function getAdapterParamsAndFeesAmount(
+	nft: ONFT721 | NFT,
+	tokenId: number,
+	owner: SignerWithAddress,
+	targetNetworkId: number,
+	sourceBridge: Bridge,
+	lzEndpoint: LZEndpointMock
+) {
+	const RecommendedGas = '10000000'
+	const adapterParams = ethers.utils.solidityPack(['uint16', 'uint256'], [1, RecommendedGas]) // default adapterParams example
+	const abi = new ethers.utils.AbiCoder()
+
+	const payload = abi.encode(
+		['address', 'string', 'string', 'uint256', 'string', 'address'],
+		[nft.address, await nft.name(), await nft.symbol(), tokenId, await nft.tokenURI(tokenId), owner.address]
+	)
+
+	const fees = await lzEndpoint.estimateFees(targetNetworkId, sourceBridge.address, payload, false, adapterParams)
+
+	return { fees, adapterParams }
+}
 // Bridging back NFT to original chain
 // from moonbeam (source) to ethereum (target)
 // Burns NFT on source (moon) and unlocks original on target (eth)
 export async function bridgeBackScenario(txReturnType: TxReturnType = TxReturnType.awaited) {
 	// eslint-disable-next-line prefer-const
-	let { source, target, targetNetworkId, sourceNetworkId } = await loadFixture(deployBridge)
+	let { source, target, targetNetworkId, sourceLzEndpoint, targetLzEndpoint, sourceNetworkId } = await loadFixture(
+		deployBridge
+	)
 
 	const { nft, signers, owner } = await loadFixture(deployNFTWithMint)
 
 	const tokenId = 1
 	await nft.approve(source.address, tokenId)
 
-	await source.bridge(nft.address, tokenId, targetNetworkId)
+	const { fees, adapterParams } = await getAdapterParamsAndFeesAmount(
+		nft,
+		tokenId,
+		owner,
+		targetNetworkId,
+		source,
+		sourceLzEndpoint
+	)
+
+	await source.bridge(
+		nft.address,
+		tokenId,
+		targetNetworkId,
+		owner.address,
+		ethers.constants.AddressZero,
+		adapterParams,
+		{ value: fees[0] }
+	)
 
 	const copyAddr = await target.copy(nft.address)
 
@@ -88,20 +197,65 @@ export async function bridgeBackScenario(txReturnType: TxReturnType = TxReturnTy
 
 	// Reversed flow
 	target = [source, (source = target)][0]
+	targetLzEndpoint = [sourceLzEndpoint, (sourceLzEndpoint = targetLzEndpoint)][0]
 	targetNetworkId = [sourceNetworkId, (sourceNetworkId = targetNetworkId)][0]
 
 	let tx
 
 	switch (txReturnType) {
 		case TxReturnType.awaited:
-			tx = await source.bridge(copy.address, tokenId, targetNetworkId)
+			tx = await source.bridge(
+				copy.address,
+				tokenId,
+				targetNetworkId,
+				owner.address,
+				ethers.constants.AddressZero,
+				adapterParams,
+				{
+					value: fees[0],
+				}
+			)
 			break
 		case TxReturnType.unawaited:
-			tx = source.bridge(copy.address, tokenId, targetNetworkId)
+			tx = source.bridge(
+				copy.address,
+				tokenId,
+				targetNetworkId,
+				owner.address,
+				ethers.constants.AddressZero,
+				adapterParams,
+				{
+					value: fees[0],
+				}
+			)
 			break
 		case TxReturnType.arrowFunction:
-			tx = () => source.bridge(copy.address, tokenId, targetNetworkId)
+			tx = () =>
+				source.bridge(
+					copy.address,
+					tokenId,
+					targetNetworkId,
+					owner.address,
+					ethers.constants.AddressZero,
+					adapterParams,
+					{
+						value: fees[0],
+					}
+				)
 	}
 
-	return { source, target, nft, copy, tx, signers, owner, tokenId, targetNetworkId }
+	return {
+		source,
+		target,
+		nft,
+		copy,
+		tx,
+		signers,
+		owner,
+		tokenId,
+		sourceNetworkId,
+		targetNetworkId,
+		sourceLzEndpoint,
+		targetLzEndpoint,
+	}
 }

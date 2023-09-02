@@ -10,6 +10,7 @@ export async function deployMockONFT() {
 	const targetNetworkId = 126 // LZ network ID - moonbeam
 
 	const LzEndpoint = (await ethers.getContractFactory('LZEndpointMock')) as LZEndpointMock__factory
+
 	const sourceLzEndpoint = await LzEndpoint.deploy(sourceNetworkId)
 	const targetLzEndpoint = await LzEndpoint.deploy(targetNetworkId)
 

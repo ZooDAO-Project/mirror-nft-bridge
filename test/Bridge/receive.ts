@@ -1,7 +1,8 @@
 import { expect } from 'chai'
 import { anyValue } from '@nomicfoundation/hardhat-chai-matchers/withArgs'
 import { NFTCopyDeployedEvent } from '../../typechain-types/contracts/Bridge'
-import { bridgeBackScenario, TxReturnType, simpleBridgeScenario } from './_.fixtures'
+import { bridgeBackScenario, TxReturnType, simpleBridgeScenario, getAdapterParamsAndFeesAmount } from './_.fixtures'
+import { ethers } from 'hardhat'
 
 export const receive = function () {
 	describe('if bridged to original chain', function () {
@@ -51,13 +52,30 @@ export const receive = function () {
 
 		describe('else copy contract exists', function () {
 			it(`doesn't deploy new contract`, async function () {
-				const { source, nft, owner, targetNetworkId } = await simpleBridgeScenario()
+				const { source, nft, owner, targetNetworkId, sourceLzEndpoint } = await simpleBridgeScenario()
 
 				await nft.mint(owner.address, 1)
 				const tokenId = 2
 				await nft.approve(source.address, tokenId)
 
-				const tx = await source.bridge(nft.address, tokenId, targetNetworkId)
+				const { fees, adapterParams } = await getAdapterParamsAndFeesAmount(
+					nft,
+					tokenId,
+					owner,
+					targetNetworkId,
+					source,
+					sourceLzEndpoint
+				)
+
+				const tx = await source.bridge(
+					nft.address,
+					tokenId,
+					targetNetworkId,
+					owner.address,
+					ethers.constants.AddressZero,
+					adapterParams,
+					{ value: fees[0] }
+				)
 				const receipt = await tx.wait()
 
 				const event = receipt.events?.find((event) => event.event === 'NFTCopyDeployed') as NFTCopyDeployedEvent
@@ -66,13 +84,31 @@ export const receive = function () {
 			})
 
 			it(`bridges NFT to existing contract`, async function () {
-				const { source, target, nft, owner, targetNetworkId, copy } = await simpleBridgeScenario()
+				const { source, target, nft, owner, targetNetworkId, sourceLzEndpoint, copy } =
+					await simpleBridgeScenario()
 
 				await nft.mint(owner.address, 1)
 				const tokenId = 2
 				await nft.approve(source.address, tokenId)
 
-				await source.bridge(nft.address, tokenId, targetNetworkId)
+				const { fees, adapterParams } = await getAdapterParamsAndFeesAmount(
+					nft,
+					tokenId,
+					owner,
+					targetNetworkId,
+					source,
+					sourceLzEndpoint
+				)
+
+				const tx = await source.bridge(
+					nft.address,
+					tokenId,
+					targetNetworkId,
+					owner.address,
+					ethers.constants.AddressZero,
+					adapterParams,
+					{ value: fees[0] }
+				)
 
 				expect(await copy.balanceOf(owner.address)).to.be.eq('2')
 			})
