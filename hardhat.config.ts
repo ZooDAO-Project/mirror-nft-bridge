@@ -23,7 +23,7 @@ task('accounts', 'Prints the list of accounts', async (taskArgs, hre) => {
 	}
 })
 
-task('bridge', 'send NFT (or ReflectedNFT) to another chain', createReflection)
+task('createReflection', 'send NFT (or ReflectedNFT) to another chain', createReflection)
 	.addParam('collection', 'collection address')
 	.addParam('tokenId', 'uint256 tokenId')
 	.addOptionalParam('targetNetwork', 'Name of target network')

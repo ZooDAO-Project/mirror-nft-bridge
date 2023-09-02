@@ -15,7 +15,7 @@ async function main() {
 	await hre.run('compile')
 
 	// We get the contract to deploy
-	const NFT = await ethers.getContractFactory('NFT')
+	const NFT = await ethers.getContractFactory('ReflectedNFT')
 	// const nft = await NFT.deploy('Фкишекгь ZooDAO Test Collection', 'MZDTC')
 	const nft = NFT.attach('0xd98308050bc5859b907091a7c6cd64feffd123cf')
 
@@ -25,7 +25,11 @@ async function main() {
 
 	// const nft = { address: '0xcf374dbe799523b0287256722e2565f69bd6a1c2' }
 
-	await verifyContract(nft.address, ['Arbitrum ZooDAO Test Collection', 'AZDTC'], 'contracts/mock/NFT.sol:NFT')
+	await verifyContract(
+		nft.address,
+		['Arbitrum ZooDAO Test Collection', 'AZDTC'],
+		'contracts/ReflectedNFT.sol:ReflectedNFT'
+	)
 }
 
 // We recommend this pattern to be able to use async/await everywhere

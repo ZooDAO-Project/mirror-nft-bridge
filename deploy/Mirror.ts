@@ -25,8 +25,8 @@ async function main() {
 	const lzEndpoint: string = LzEndpoints[hre.network.name as keyof typeof LzEndpoints]
 	log('LzEndpoint', lzEndpoint)
 
-	const bridge = Mirror.attach('0x36a65778e80Aa9E0BFe4458a049536FE66cec8a0')
-	// const bridge = await Mirror.deploy(lzEndpoint, feeAmount, feeReceiver)
+	// const bridge = Mirror.attach('0x36a65778e80Aa9E0BFe4458a049536FE66cec8a0')
+	const bridge = await Mirror.deploy(lzEndpoint, feeAmount, feeReceiver)
 
 	await bridge.deployed()
 
@@ -39,7 +39,9 @@ async function main() {
 
 // We recommend this pattern to be able to use async/await everywhere
 // and properly handle errors.
-main().catch((error) => {
-	console.error(error)
-	process.exitCode = 1
-})
+main()
+	.catch((error) => {
+		console.error(error)
+		process.exitCode = 1
+	})
+	.then(() => process.exit(0))

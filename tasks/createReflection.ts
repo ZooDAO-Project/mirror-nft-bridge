@@ -21,8 +21,8 @@ export async function createReflection(taskArgs: any, hre: HardhatRuntimeEnviron
 
 	const Mirror = await hre.ethers.getContractFactory('Mirror')
 
-	const lzEndpointAddr = LzEndpoints[hre.network.name as keyof typeof LzEndpoints]
-	const lzEndpoint = (await hre.ethers.getContractAt('ILayerZeroEndpoint', lzEndpointAddr)) as LZEndpointMock
+	// const lzEndpointAddr = LzEndpoints[hre.network.name as keyof typeof LzEndpoints]
+	// const lzEndpoint = (await hre.ethers.getContractAt('ILayerZeroEndpoint', lzEndpointAddr)) as LZEndpointMock
 
 	const NFT = await hre.ethers.getContractFactory('NFT')
 
@@ -49,10 +49,8 @@ export async function createReflection(taskArgs: any, hre: HardhatRuntimeEnviron
 	const { fees, adapterParams } = await getAdapterParamsAndFeesAmount(
 		nft,
 		taskArgs.tokenId,
-		owner,
 		remoteChainId,
 		source,
-		lzEndpoint,
 		isReflectionDeployed
 	)
 
@@ -86,10 +84,8 @@ export async function createReflection(taskArgs: any, hre: HardhatRuntimeEnviron
 export async function getAdapterParamsAndFeesAmount(
 	nft: ONFT721 | NFT,
 	tokenId: number,
-	owner: SignerWithAddress,
 	targetNetworkId: number,
 	sourceBridge: Mirror,
-	lzEndpoint: LZEndpointMock,
 	isReflectionDeployed: boolean
 ) {
 	const GasWithDeploy = '2100000'
@@ -98,14 +94,14 @@ export async function getAdapterParamsAndFeesAmount(
 	const RecommendedGas = isReflectionDeployed ? GasOnRegularBridge : GasWithDeploy
 
 	const adapterParams = ethers.utils.solidityPack(['uint16', 'uint256'], [1, RecommendedGas]) // default adapterParams example
-	const abi = new ethers.utils.AbiCoder()
+	// const abi = new ethers.utils.AbiCoder()
 
-	const payload = abi.encode(
-		['address', 'string', 'string', 'uint256', 'string', 'address'],
-		[nft.address, await nft.name(), await nft.symbol(), tokenId, await nft.tokenURI(tokenId), owner.address]
-	)
+	// const payload = abi.encode(
+	// 	['address', 'string', 'string', 'uint256', 'string', 'address'],
+	// 	[nft.address, await nft.name(), await nft.symbol(), tokenId, await nft.tokenURI(tokenId), owner.address]
+	// )
 
-	const fees = await lzEndpoint.estimateFees(targetNetworkId, sourceBridge.address, payload, false, adapterParams)
+	const fees = await sourceBridge.estimateSendFee(nft.address, tokenId, targetNetworkId, false, adapterParams)
 
 	return { fees, adapterParams }
 }
