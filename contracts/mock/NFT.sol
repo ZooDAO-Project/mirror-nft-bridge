@@ -15,16 +15,20 @@ contract NFT is ERC721Enumerable {
 	}
 
 	function _baseURI() internal pure override returns (string memory) {
-		return 'https://ipfs.io/ipfs/QmTcsJujMBvRQL3gR6TeT4CBfUFayQScLYSKdViyCki7vR/';
+		return 'https://gateway.pinata.cloud/ipfs/QmQe92oxpt6uZLA6MYvv8pioxyDszonh7Gw9upz1nCA4T9/';
 	}
 
 	function tokenURI(uint256 tokenId) public pure override returns (string memory) {
-		return string(abi.encodePacked(_baseURI(), tokenId.toString(), '.gif'));
+		return string(abi.encodePacked(_baseURI(), tokenId.toString(), '.json'));
 	}
 
 	function mint(address _to, uint256 _quantity) public {
 		for (uint i = 0; i < _quantity; i++) {
 			_mint(_to, totalSupply() + 1);
 		}
+	}
+
+	function burn(uint256 tokenId) public {
+		_burn(tokenId);
 	}
 }
