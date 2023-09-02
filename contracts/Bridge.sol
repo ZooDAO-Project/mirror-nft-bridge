@@ -10,15 +10,17 @@ import '@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol';
 contract Bridge is NftFactory, IBridge, IERC721Receiver, Ownable {
 	mapping(address => bool) original;
 
-	// TODO: NFT can be sold on target chain and should be returned on source chain to a new owner
-	// collection => tokenId => owner
-	// mapping(address => mapping(uint256 => address)) public owners;
-
 	// targetNetworkId => trustedRemote
 	mapping(uint256 => address) public trustedRemote;
 
+	mapping(address => bool) public isOriginalChainForCollection;
+
 	/* EVENTS */
 	event NFTReceived(address operator, address from, uint256 tokenId, bytes data);
+
+	event NFTBridged(address originalCollectionAddress, uint256 tokenId, string tokenURI, address owner);
+
+	event NFTReturned(address originalCollectionAddress, uint256 tokenId, address owner);
 
 	event MessageSend(address collection, string name, string symbol, uint256 tokenId, string tokenURI, address owner);
 
@@ -35,25 +37,29 @@ contract Bridge is NftFactory, IBridge, IERC721Receiver, Ownable {
 
 	function bridge(address collectionAddr, uint256 tokenId, uint256 targetNetworkId) public {
 		zONFT collection = zONFT(collectionAddr);
-		collection.safeTransferFrom(msg.sender, address(this), tokenId);
 
 		address target = trustedRemote[targetNetworkId];
 		string memory name = collection.name();
 		string memory symbol = collection.symbol();
 		string memory tokenURI = collection.tokenURI(tokenId);
 
-		IBridge(target).lzReceive(collectionAddr, name, symbol, tokenId, tokenURI, msg.sender);
+		address originalCollectionAddress;
 
-		// Burn NFT if it's copy
-		// if (isCopy[collectionAddr]) {
-		// 	collection.burn(tokenId);
-		// }
-
-		if (!isCollectionContractExistOnCurrentNetwork(collectionAddr)) {
-			_isContractExists[collectionAddr] = true;
+		if (isCopy[collectionAddr]) {
+			//	NFT is copy - burn
+			collection.burn(tokenId);
+			originalCollectionAddress = originalCollectionAddresses[collectionAddr];
+		} else {
+			// Is original contract
+			// Lock NFT on contract
+			collection.safeTransferFrom(msg.sender, address(this), tokenId);
+			isOriginalChainForCollection[collectionAddr] = true;
+			originalCollectionAddress = collectionAddr;
 		}
 
-		emit MessageSend(collectionAddr, name, symbol, tokenId, tokenURI, msg.sender);
+		IBridge(target).lzReceive(originalCollectionAddress, name, symbol, tokenId, tokenURI, msg.sender);
+
+		emit MessageSend(originalCollectionAddress, name, symbol, tokenId, tokenURI, msg.sender);
 	}
 
 	function lzReceive(
@@ -63,26 +69,31 @@ contract Bridge is NftFactory, IBridge, IERC721Receiver, Ownable {
 		uint256 tokenId,
 		string calldata tokenURI,
 		address _owner
-	) public returns (address) {
+	) public {
+		bool isOriginalChain = isOriginalChainForCollection[originalCollectionAddr];
+
+		if (isOriginalChain) {
+			// Unlock NFT and return to owner
+			zONFT(originalCollectionAddr).safeTransferFrom(address(this), _owner, tokenId);
+
+			emit NFTReturned(originalCollectionAddr, tokenId, _owner);
+		} else {
+			bool isThereCopyContract = copy[originalCollectionAddr] != address(0);
+
+			address collectionAddr;
+
+			if (isThereCopyContract) {
+				collectionAddr = copy[originalCollectionAddr];
+			} else {
+				collectionAddr = _deployNewNft(originalCollectionAddr, name, symbol);
+			}
+
+			zONFT(collectionAddr).mint(_owner, tokenId, tokenURI);
+
+			emit NFTBridged(originalCollectionAddr, tokenId, tokenURI, _owner);
+		}
+
 		emit MessageReceived(originalCollectionAddr, name, symbol, tokenId, tokenURI, _owner);
-
-		// 1. is there contract on current network?
-		// if (isThereContract[originalCollectionAddr]) {}
-
-		// 2. is it copy?
-		// if (getCopy[originalCollectionAddr] != address(0)) {}
-
-		// if (true) {
-		// 	// Transfered to owner got from message, not the recorded owner in contract
-		// 	// because it could be sold or transfered on source chain
-		// 	collection.safeTransferFrom(address(this), _owner, tokenId);
-		// 	return collectionAddr;
-		// } else {
-		// 	address copy = _deployNewNft(name, symbol);
-		// 	return copy;
-		// }
-
-		return address(0);
 	}
 
 	function setTrustedRemote(uint256 targetNetworkId, address trustedRemoteAddr) public onlyOwner {

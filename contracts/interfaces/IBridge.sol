@@ -12,5 +12,5 @@ interface IBridge {
 		uint256 tokenId,
 		string calldata tokenURI,
 		address owner
-	) external returns (address);
+	) external;
 }

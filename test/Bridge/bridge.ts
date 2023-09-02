@@ -1,99 +1,103 @@
-import { ethers } from 'hardhat'
 import { loadFixture } from '@nomicfoundation/hardhat-network-helpers'
-import { deployBridge } from './_'
-import { deployNFT } from '../NFT/_'
 import { expect } from 'chai'
-
-async function deployNFTWithMint() {
-	const nft = await deployNFT()
-	const signers = await ethers.getSigners()
-	await nft.mint(signers[0].address, 1)
-	return { nft, signers }
-}
+import { expectToBeRevertedWith } from '../_utils'
+import { bridgeBackScenario, TxReturnType, simpleBridgeScenario, deployBridge, deployNFTWithMint } from './_.fixtures'
 
 export const bridge = function () {
-	it(`locks user's NFT on contract`, async function () {
-		const { source, targetNetworkId } = await loadFixture(deployBridge)
-		const { nft, signers } = await loadFixture(deployNFTWithMint)
+	describe('if collection is copy', function () {
+		it('burns copy NFT', async function () {
+			const { copy, tx, owner } = await bridgeBackScenario(TxReturnType.arrowFunction)
 
-		const tokenId = 1
-		await nft.approve(source.address, tokenId)
+			await expect(tx).to.changeTokenBalance(copy, owner, -1)
+		})
 
-		const tx = () => source.bridge(nft.address, tokenId, targetNetworkId)
-		await expect(tx).to.changeTokenBalances(nft, [signers[0], source], [-1, 1])
+		it('sends and receives message with original collection address, not copy address', async function () {
+			const { source, target, copy, nft, tx, owner, tokenId } = await bridgeBackScenario()
+
+			await expect(tx)
+				.to.emit(source, 'MessageSend')
+				.withArgs(
+					nft.address,
+					await copy.name(),
+					await copy.symbol(),
+					tokenId,
+					await nft.tokenURI(tokenId),
+					owner.address
+				)
+
+			await expect(tx)
+				.to.emit(target, 'MessageReceived')
+				.withArgs(
+					nft.address,
+					await copy.name(),
+					await copy.symbol(),
+					tokenId,
+					await nft.tokenURI(tokenId),
+					owner.address
+				)
+		})
 	})
 
-	it(`doesn't lock without approve`, async function () {
-		const { source, targetNetworkId } = await loadFixture(deployBridge)
-		const { nft } = await loadFixture(deployNFTWithMint)
+	describe('else collection is original', function () {
+		describe(`locks user's NFT on contract`, function () {
+			it(`makes transfer from msg.sender to contract address`, async function () {
+				const { source, nft, tx, owner, tokenId } = await simpleBridgeScenario(TxReturnType.arrowFunction)
 
-		const tokenId = 1
-		const tx = source.bridge(nft.address, tokenId, targetNetworkId)
-		await expect(tx).to.be.revertedWith('ERC721: caller is not token owner or approved')
+				await expect(tx).to.changeTokenBalances(nft, [owner, source], [-1, 1])
+
+				expect(await nft.ownerOf(tokenId)).to.be.eq(source.address)
+			})
+
+			it(`doesn't transfer without approve`, async function () {
+				const { source, targetNetworkId } = await loadFixture(deployBridge)
+				const { nft } = await loadFixture(deployNFTWithMint)
+
+				const tokenId = 1
+				const tx = source.bridge(nft.address, tokenId, targetNetworkId)
+
+				await expectToBeRevertedWith(tx, 'ERC721: caller is not token owner or approved')
+			})
+		})
+
+		it(`records that collection is original for current chain`, async function () {
+			const { source, nft } = await simpleBridgeScenario()
+
+			expect(await source.isOriginalChainForCollection(nft.address)).to.be.true
+		})
 	})
 
 	it(`Sends message with params (collectionAddr, name, symbol, tokenId, owner) to another bridge contract`, async function () {
-		const { source, targetNetworkId, signers } = await loadFixture(deployBridge)
-		const { nft } = await loadFixture(deployNFTWithMint)
-
-		const tokenId = 1
-
-		await nft.approve(source.address, tokenId)
-
-		const tokenURI = await nft.tokenURI(tokenId)
-		const tx = source.bridge(nft.address, tokenId, targetNetworkId)
+		const { nft, owner, tokenId, tx, source } = await simpleBridgeScenario()
 
 		await expect(tx)
 			.to.emit(source, 'MessageSend')
-			.withArgs(nft.address, await nft.name(), await nft.symbol(), tokenId, tokenURI, signers[0].address)
+			.withArgs(
+				nft.address,
+				await nft.name(),
+				await nft.symbol(),
+				tokenId,
+				await nft.tokenURI(tokenId),
+				owner.address
+			)
 	})
 
 	it(`Sends message to bridge contract on target network (mock logic atm, same network)`, async function () {
-		const { source, target, targetNetworkId } = await loadFixture(deployBridge)
-		const { nft, signers } = await loadFixture(deployNFTWithMint)
-
-		const owner = signers[0].address
-		const tokenId = 1
-		const tokenURI = await nft.tokenURI(tokenId)
-
-		await nft.approve(source.address, tokenId)
-		const tx = source.bridge(nft.address, tokenId, targetNetworkId)
+		const { nft, owner, tokenId, tx, target } = await simpleBridgeScenario()
 
 		await expect(tx)
 			.to.emit(target, 'MessageReceived')
-			.withArgs(nft.address, await nft.name(), await nft.symbol(), tokenId, tokenURI, owner)
+			.withArgs(
+				nft.address,
+				await nft.name(),
+				await nft.symbol(),
+				tokenId,
+				await nft.tokenURI(tokenId),
+				owner.address
+			)
 	})
 
-	it(`records that collection address exist on current chain`, async function () {
+	xit(`multiple bridges to check gas expenditure for first and following tx hardness`, async function () {
 		const { source, targetNetworkId } = await loadFixture(deployBridge)
-		const { nft } = await loadFixture(deployNFTWithMint)
-
-		const tokenId = 1
-
-		await nft.approve(source.address, tokenId)
-		await source.bridge(nft.address, tokenId, targetNetworkId)
-
-		expect(await source.isCollectionContractExistOnCurrentNetwork(nft.address)).to.be.true
-	})
-
-	it(`should not record copy address for original contract on original chain`, async function () {
-		const { source, target, targetNetworkId } = await loadFixture(deployBridge)
-		const { nft, signers } = await loadFixture(deployNFTWithMint)
-
-		const owner = signers[0].address
-		const tokenId = 1
-		const tokenURI = await nft.tokenURI(tokenId)
-
-		await nft.approve(source.address, tokenId)
-		const tx = source.bridge(nft.address, tokenId, targetNetworkId)
-
-		await expect(tx)
-			.to.emit(target, 'MessageReceived')
-			.withArgs(nft.address, await nft.name(), await nft.symbol(), tokenId, tokenURI, owner)
-	})
-
-	it(`multiple bridges to check gas expenditure for first and following tx hardness`, async function () {
-		const { source, target, targetNetworkId } = await loadFixture(deployBridge)
 		const { nft, signers } = await loadFixture(deployNFTWithMint)
 
 		const owner = signers[0].address

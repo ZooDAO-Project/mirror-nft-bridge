@@ -6,20 +6,21 @@ import './zONFT.sol';
 
 abstract contract NftFactory {
 	// originalCollectionAddr => isContractExistOnCurrentNetwork
-	mapping(address => bool) internal _isContractExists;
+	// mapping(address => bool) internal _isContractExists;
 
 	// originalCollectionContract => copyCollectionContract
-	mapping(address => address) internal _copy;
+	mapping(address => address) public copy;
 
 	// collectionAddr => isCopy
 	mapping(address => bool) public isCopy;
 
-	function isCollectionContractExistOnCurrentNetwork(address originalCollectionAddr) public view returns (bool) {
-		return _isContractExists[originalCollectionAddr];
-	}
+	// copyAddress => origCollAddr
+	mapping(address => address) public originalCollectionAddresses;
+
+	event NFTCopyDeployed(address copyContractAddress, address originalContractAddress);
 
 	function getCopy(address originalCollectionContract) public view returns (address) {
-		return _copy[originalCollectionContract];
+		return copy[originalCollectionContract];
 	}
 
 	function _deployNewNft(
@@ -29,7 +30,11 @@ abstract contract NftFactory {
 	) internal returns (address) {
 		zONFT nft = new zONFT(name, symbol);
 
-		_copy[originalCollectionAddr] = address(nft);
+		copy[originalCollectionAddr] = address(nft);
+		isCopy[address(nft)] = true;
+		originalCollectionAddresses[address(nft)] = originalCollectionAddr;
+
+		emit NFTCopyDeployed(address(nft), originalCollectionAddr);
 
 		return address(nft);
 	}
