@@ -258,7 +258,7 @@ export const createReflection = function () {
 			{ value: fees[0] }
 		)
 
-		await expectToBeRevertedWith(tx, "Mirror: tokenIds wern't provided")
+		await expectToBeRevertedWith(tx, "Mirror: tokenIds weren't provided")
 	})
 
 	it('should revert on collection address is zero', async function () {
@@ -282,7 +282,7 @@ export const createReflection = function () {
 			{ value: fees[0] }
 		)
 
-		await expectToBeRevertedWith(tx, 'Mirror: collection is not eligible to make reflection of')
+		await expectToBeRevertedWith(tx, 'Mirror: collection is not eligible')
 	})
 
 	it('should revert on incorrect target network ID', async function () {

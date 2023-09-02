@@ -29,7 +29,7 @@ export const eligibility = async function () {
 			{ value: fees[0] }
 		)
 
-		await expectToBeRevertedWith(tx, 'Mirror: collection is not eligible to make reflection of')
+		await expectToBeRevertedWith(tx, 'Mirror: collection is not eligible')
 
 		await source.changeCollectionEligibility(nft.address, true)
 

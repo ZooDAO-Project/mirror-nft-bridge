@@ -103,11 +103,10 @@ contract Mirror is NonblockingLzApp, ReflectionCreator, FeeTaker, IERC721Receive
 	/// @param _adapterParams abi.encode(1, gasLimit) gasLimit for transaction on target chain
 	/// @dev _adapterParams`s gasLimit should be 2,200,000 for bridge of single token to a new chain (chain where is no ReflectedNFT contract)
 	/// @dev _adapterParams`s gasLimit should be 300,000 for bridge of signle token to already deployed ReflectedNFT contract
-	/// @dev _adapterParams`s gasLimit should be 300,000 for bridge of signle token to already deployed ReflectedNFT contract
-	/// @dev Original NFT collection address is used as unique identifier at all chains
-	/// @dev Original NFT collection is passed as parameter at every bridge process to be used as identifier
-	/// @dev Passes in message name and symbol of collection to deploy ReflectedNFT contract if needed
-	/// @dev Passes in message tokenURI and tokenId of bridged NFT top mint exact same NFT on target chain
+	/// @dev Original NFT collection is passed in message of bridge from any to any chain
+	/// @dev Original NFT collection address is used as a unique identifier at all chains
+	/// @dev In message provides name and symbols of bridged NFT collection to deploy exact same NFT contract on target chain
+	/// @dev In message provides tokenIds and tokenURIs of bridged NFT to mint exact same NFTs on target chain
 	function createReflection(
 		address collectionAddr,
 		uint256[] memory tokenIds,
@@ -116,8 +115,8 @@ contract Mirror is NonblockingLzApp, ReflectionCreator, FeeTaker, IERC721Receive
 		address _zroPaymentAddress,
 		bytes memory _adapterParams
 	) public payable {
-		require(isEligibleCollection[collectionAddr], 'Mirror: collection is not eligible to make reflection of');
-		require(tokenIds.length > 0, "Mirror: tokenIds wern't provided");
+		require(isEligibleCollection[collectionAddr], 'Mirror: collection is not eligible');
+		require(tokenIds.length > 0, "Mirror: tokenIds weren't provided");
 		require(tokenIds.length <= reflectionAmountLimit, "Mirror: can't reflect more than limit");
 
 		_deductFee();
@@ -145,8 +144,7 @@ contract Mirror is NonblockingLzApp, ReflectionCreator, FeeTaker, IERC721Receive
 
 			originalCollectionAddress = originalCollectionAddresses[collectionAddr];
 		} else {
-			// Is original contract
-			// Lock NFT on contract
+			// Is original NFT - lock NFT
 
 			for (uint256 i = 0; i < tokenIds.length; i++) {
 				collection.safeTransferFrom(msg.sender, address(this), tokenIds[i]);
@@ -183,12 +181,12 @@ contract Mirror is NonblockingLzApp, ReflectionCreator, FeeTaker, IERC721Receive
 	/// @notice Deploys ReflectedNFT contract if collection was bridged to current chain for the first time
 	/// @notice Uses existing ReflectedNFT contract if collection was bridged to that chain before
 	/// @notice Mints NFT-reflection on ReflectedNFT contract
-	/// @notice Returns (unlocks) NFT to owner if current chain is original for collection
-	/// @param originalCollectionAddr Address of original collection on original chain as unique identifier
+	/// @notice Returns (unlocks) NFT to owner if current chain is original for bridged NFT
+	/// @param originalCollectionAddr Address of original collection on original chain as a unique identifier
 	/// @param name name of original collection to mint ReflectedNFT if needed
 	/// @param symbol symbol of original collection to mint ReflectedNFT if needed
-	/// @param tokenIds Array of tokenIds of bridged NFTs to mint exact same tokens
-	/// @param tokenURIs Array of tokenURIs of bridged NFTs to mint exact same tokens
+	/// @param tokenIds Array of tokenIds of bridged NFTs to mint exact same tokens or to unlocks it
+	/// @param tokenURIs Array of tokenURIs of bridged NFTs to mint exact same tokens if needed
 	/// @param _owner Address to mint or return token to
 	function _reflect(
 		address originalCollectionAddr,
@@ -211,6 +209,7 @@ contract Mirror is NonblockingLzApp, ReflectionCreator, FeeTaker, IERC721Receive
 		} else {
 			bool isThereReflectionContract = reflection[originalCollectionAddr] != address(0);
 
+			// Get ReflectedNFT address from storage (if exists) or deploy
 			address collectionAddr;
 
 			if (isThereReflectionContract) {
@@ -219,8 +218,10 @@ contract Mirror is NonblockingLzApp, ReflectionCreator, FeeTaker, IERC721Receive
 				collectionAddr = _deployReflection(originalCollectionAddr, name, symbol);
 			}
 
+			// Make eligible to be able to bridge
 			isEligibleCollection[collectionAddr] = true;
 
+			// Mint NFT-reflections
 			for (uint256 i = 0; i < tokenIds.length; i++) {
 				ReflectedNFT(collectionAddr).mint(_owner, tokenIds[i], tokenURIs[i]);
 			}
