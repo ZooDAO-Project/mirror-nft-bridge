@@ -25,6 +25,7 @@ export const eligibility = async function () {
 			[tokenId],
 			targetNetworkId,
 			owner.address,
+			owner.address,
 			ethers.constants.AddressZero,
 			adapterParams,
 			{ value: fees[0] }
@@ -38,6 +39,7 @@ export const eligibility = async function () {
 			nft.address,
 			[tokenId],
 			targetNetworkId,
+			owner.address,
 			owner.address,
 			ethers.constants.AddressZero,
 			adapterParams,

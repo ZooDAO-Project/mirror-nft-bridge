@@ -26,6 +26,7 @@ export const complexRoute = async function () {
 		[tokenId],
 		networkIds.moonNetworkId,
 		owner.address,
+		owner.address,
 		zeroAddress,
 		adapterParams,
 		{
@@ -45,6 +46,7 @@ export const complexRoute = async function () {
 		[tokenId],
 		networkIds.arbNetworkId,
 		owner.address,
+		owner.address,
 		zeroAddress,
 		adapterParams,
 		{
@@ -63,6 +65,7 @@ export const complexRoute = async function () {
 		arbReflectionNftAddr,
 		[tokenId],
 		networkIds.ethNetworkId,
+		owner.address,
 		owner.address,
 		zeroAddress,
 		adapterParams,

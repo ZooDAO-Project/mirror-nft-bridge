@@ -5,7 +5,7 @@ import { loadFixture } from '@nomicfoundation/hardhat-network-helpers'
 import { ethers } from 'hardhat'
 import { NFT } from '../../typechain-types'
 
-export const bridgeWithChangingOwner = async function () {
+export const bridgeWithChangingOwnerViaSettingReceiver = async function () {
 	const { nft, owner, tokenId, signers } = await loadFixture(deployNFTWithMint)
 	const { ethBridge, moonBridge, networkIds, lzEndpoints } = await loadFixture(deployMultipleBridges)
 
@@ -29,7 +29,7 @@ export const bridgeWithChangingOwner = async function () {
 		nft.address,
 		[tokenId],
 		networkIds.moonNetworkId,
-		owner.address,
+		signers[5].address,
 		owner.address,
 		zeroAddress,
 		adapterParams,
@@ -43,10 +43,10 @@ export const bridgeWithChangingOwner = async function () {
 	const moonReflectionNftAddr = await moonBridge.reflection(nft.address)
 	const moonReflection = (await ethers.getContractAt('NFT', moonReflectionNftAddr)) as NFT
 
-	expect(await moonReflection.ownerOf(tokenId)).to.be.eq(owner.address)
+	expect(await moonReflection.ownerOf(tokenId)).to.be.eq(signers[5].address)
 
 	// Sold NFT $ on moonbeam
-	await moonReflection.transferFrom(owner.address, signers[5].address, tokenId)
+	// await moonReflection.transferFrom(owner.address, signers[5].address, tokenId)
 
 	await moonBridge
 		.connect(signers[5])
@@ -54,7 +54,7 @@ export const bridgeWithChangingOwner = async function () {
 			moonReflectionNftAddr,
 			[tokenId],
 			networkIds.ethNetworkId,
-			signers[5].address,
+			signers[3].address,
 			signers[5].address,
 			zeroAddress,
 			adapterParams,
@@ -65,5 +65,5 @@ export const bridgeWithChangingOwner = async function () {
 
 	expect(await moonReflection.balanceOf(signers[5].address)).to.be.eq(0)
 
-	expect(await nft.ownerOf(tokenId)).to.be.eq(signers[5].address)
+	expect(await nft.ownerOf(tokenId)).to.be.eq(signers[3].address)
 }

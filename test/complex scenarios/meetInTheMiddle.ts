@@ -28,6 +28,7 @@ export const meetInTheMiddle = async function () {
 		[tokenId],
 		networkIds.moonNetworkId,
 		owner.address,
+		owner.address,
 		zeroAddress,
 		adapterParams,
 		{
@@ -39,6 +40,7 @@ export const meetInTheMiddle = async function () {
 		nft.address,
 		[tokenId + 1],
 		networkIds.arbNetworkId,
+		owner.address,
 		owner.address,
 		zeroAddress,
 		adapterParams,
@@ -59,6 +61,7 @@ export const meetInTheMiddle = async function () {
 		moonReflectionNftAddr,
 		[tokenId],
 		networkIds.arbNetworkId,
+		owner.address,
 		owner.address,
 		zeroAddress,
 		adapterParams,

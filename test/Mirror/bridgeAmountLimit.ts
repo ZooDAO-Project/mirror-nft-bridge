@@ -23,6 +23,7 @@ export const bridgeAmountLimit = function () {
 			tokenIds,
 			targetNetworkId,
 			owner.address,
+			owner.address,
 			ethers.constants.AddressZero,
 			adapterParams,
 			{ value: fees[0] }
@@ -51,6 +52,7 @@ export const bridgeAmountLimit = function () {
 			nft.address,
 			tokenIds,
 			targetNetworkId,
+			owner.address,
 			owner.address,
 			ethers.constants.AddressZero,
 			adapterParams,

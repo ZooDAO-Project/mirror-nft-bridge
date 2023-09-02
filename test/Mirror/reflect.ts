@@ -89,6 +89,7 @@ export const reflect = function () {
 					[tokenId],
 					targetNetworkId,
 					owner.address,
+					owner.address,
 					ethers.constants.AddressZero,
 					adapterParams,
 					{ value: fees[0] }
@@ -121,6 +122,7 @@ export const reflect = function () {
 					nft.address,
 					[tokenId],
 					targetNetworkId,
+					owner.address,
 					owner.address,
 					ethers.constants.AddressZero,
 					adapterParams,

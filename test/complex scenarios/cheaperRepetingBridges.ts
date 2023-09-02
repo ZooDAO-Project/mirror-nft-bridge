@@ -29,6 +29,7 @@ export const cheaperRepeatedBridges = async function () {
 		[tokenId],
 		networkIds.moonNetworkId,
 		owner.address,
+		owner.address,
 		zeroAddress,
 		adapterParams,
 		{
@@ -60,6 +61,7 @@ export const cheaperRepeatedBridges = async function () {
 			nft.address,
 			[tokenId + 1],
 			networkIds.moonNetworkId,
+			owner.address,
 			owner.address,
 			zeroAddress,
 			newAdapterParams,
