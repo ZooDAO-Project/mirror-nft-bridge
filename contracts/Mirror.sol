@@ -9,10 +9,6 @@ import '@layerzerolabs/solidity-examples/contracts/token/onft/ONFT721Core.sol';
 import '@layerzerolabs/solidity-examples/contracts/lzApp/NonblockingLzApp.sol';
 
 contract Mirror is NonblockingLzApp, ReflectionCreator, IERC721Receiver {
-	uint16 public constant FUNCTION_TYPE_SEND = 1;
-
-	using BytesLib for bytes;
-
 	mapping(address => bool) public isOriginalChainForCollection;
 
 	mapping(address => bool) public isEligibleCollection;
@@ -120,7 +116,7 @@ contract Mirror is NonblockingLzApp, ReflectionCreator, IERC721Receiver {
 		emit BridgeNFT(originalCollectionAddress, name, symbol, tokenIds, tokenURIs, msg.sender);
 	}
 
-	function _nonblockingLzReceive(uint16, bytes memory, uint64, bytes memory _payload) internal virtual override {
+	function _nonblockingLzReceive(uint16, bytes memory, uint64, bytes memory payload) internal virtual override {
 		(
 			address originalCollectionAddr,
 			string memory name,
@@ -128,7 +124,7 @@ contract Mirror is NonblockingLzApp, ReflectionCreator, IERC721Receiver {
 			uint256[] memory tokenIds,
 			string[] memory tokenURIs,
 			address _owner
-		) = abi.decode(_payload, (address, string, string, uint256[], string[], address));
+		) = abi.decode(payload, (address, string, string, uint256[], string[], address));
 
 		_reflect(originalCollectionAddr, name, symbol, tokenIds, tokenURIs, _owner);
 	}
@@ -170,8 +166,6 @@ contract Mirror is NonblockingLzApp, ReflectionCreator, IERC721Receiver {
 
 			emit NFTBridged(originalCollectionAddr, tokenIds, tokenURIs, _owner);
 		}
-
-		// emit MessageReceived(originalCollectionAddr, name, symbol, tokenId, tokenURI, _owner);
 	}
 
 	function changeCollectionEligibility(address collection, bool eligibility) external onlyOwner {
