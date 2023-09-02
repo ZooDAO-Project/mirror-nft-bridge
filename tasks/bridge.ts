@@ -1,27 +1,38 @@
 import CHAIN_ID from '../constants/chainIds.json'
 import LzEndpoints from '../constants/LzEndpoints.json'
-import { getAdapterParamsAndFeesAmount } from '../test/Bridge/_.fixtures'
 import { HardhatRuntimeEnvironment } from 'hardhat/types'
-import { Bridge, LZEndpointMock, NFT } from '../typechain-types'
+import { Bridge, LZEndpointMock, NFT, ONFT721 } from '../typechain-types'
+import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
+import { ethers } from 'ethers'
+import { log } from 'console'
+import { bridgeAddresses } from '../constants/bridgeAddresses'
+
+type SupportedNetwork = 'ethereum' | 'moonbeam' | 'fantom' | 'arbitrum'
 
 export async function bridge(taskArgs: any, hre: HardhatRuntimeEnvironment) {
 	const signers = await hre.ethers.getSigners()
 	const owner = signers[0]
 	const tokenId = taskArgs.tokenId
 
+	log(taskArgs)
+
 	const targetNetwork = taskArgs.targetNetwork as keyof typeof CHAIN_ID
 	const remoteChainId: any = CHAIN_ID[targetNetwork]
 
 	const Bridge = await hre.ethers.getContractFactory('Bridge')
-	const LzEndpoint = await hre.ethers.getContractFactory('ILayerZeroEndpoint')
+	const lzEndpointAddr = LzEndpoints[hre.network.name as keyof typeof LzEndpoints]
+	const lzEndpoint = (await hre.ethers.getContractAt('ILayerZeroEndpoint', lzEndpointAddr)) as LZEndpointMock
 	const NFT = await hre.ethers.getContractFactory('NFT')
 
-	const lzEndpointAddr = LzEndpoints[hre.network.name as keyof typeof LzEndpoints]
-	const lzEndpoint = LzEndpoint.attach(lzEndpointAddr) as LZEndpointMock
-
-	const source = Bridge.attach(taskArgs.localContract) as Bridge
+	const mode: keyof typeof bridgeAddresses = taskArgs.mode || 'test'
+	const network = hre.network.name as SupportedNetwork
+	const localBridgeAddress = bridgeAddresses[mode][network]
+	const source = Bridge.attach(localBridgeAddress) as Bridge
 
 	const nft = NFT.attach(taskArgs.collection) as NFT
+
+	const tx = await nft.approve(source.address, taskArgs.tokenId)
+	await tx.wait()
 
 	const { fees, adapterParams } = await getAdapterParamsAndFeesAmount(
 		nft,
@@ -44,8 +55,9 @@ export async function bridge(taskArgs: any, hre: HardhatRuntimeEnvironment) {
 			adapterParams, // refund address (if too much message fee is sent, it gets refunded)
 			{ value: fees[0] }
 		)
-		const receipt = await tx.wait()
-		console.log(`✅ [${hre.network.name}] send(${remoteChainId}, ${tokenId})`)
+		console.log(
+			`✅ [${hre.network.name}] bridge(${taskArgs.collection}, ${tokenId}, ${remoteChainId} (${taskArgs.targetNetwork}))`
+		)
 		console.log(` tx: ${tx.hash}`)
 	} catch (e: any) {
 		if (e.error?.message.includes('Message sender must own the OmnichainNFT.')) {
@@ -56,6 +68,28 @@ export async function bridge(taskArgs: any, hre: HardhatRuntimeEnvironment) {
 			console.log(e)
 		}
 	}
+}
+
+export async function getAdapterParamsAndFeesAmount(
+	nft: ONFT721 | NFT,
+	tokenId: number,
+	owner: SignerWithAddress,
+	targetNetworkId: number,
+	sourceBridge: Bridge,
+	lzEndpoint: LZEndpointMock
+) {
+	const RecommendedGas = '2000000'
+	const adapterParams = ethers.utils.solidityPack(['uint16', 'uint256'], [1, RecommendedGas]) // default adapterParams example
+	const abi = new ethers.utils.AbiCoder()
+
+	const payload = abi.encode(
+		['address', 'string', 'string', 'uint256', 'string', 'address'],
+		[nft.address, await nft.name(), await nft.symbol(), tokenId, await nft.tokenURI(tokenId), owner.address]
+	)
+
+	const fees = await lzEndpoint.estimateFees(targetNetworkId, sourceBridge.address, payload, false, adapterParams)
+
+	return { fees, adapterParams }
 }
 
 // npx hardhat --network fuji ownerOf --token-id 1 --contract ExampleUniversalONFT721

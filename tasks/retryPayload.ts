@@ -5,7 +5,7 @@ import CHAIN_ID from '../constants/chainIds.json'
 
 export async function retryPayload(taskArgs: any, hre: HardhatRuntimeEnvironment) {
 	const network = hre.network.name
-	const endpoint = LZ_ENDPOINTS[network]
+	const endpoint = LZ_ENDPOINTS[network as keyof typeof LZ_ENDPOINTS]
 	const lzEndpoint = await hre.ethers.getContractAt('ILayerZeroEndpoint', endpoint)
 
 	const srcChain = taskArgs.srcChain as keyof typeof CHAIN_ID

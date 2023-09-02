@@ -25,8 +25,6 @@ task('bridge', 'send NFT (or zONFT) to another chain', bridge)
 	.addParam('collection', 'collection address')
 	.addParam('tokenId', 'uint256 tokenId')
 	.addOptionalParam('targetNetwork', 'Name of target network')
-	.addOptionalParam('localContract', 'Address of local contract')
-	.addOptionalParam('remoteContract', 'Address of remote contract')
 
 task(
 	'setTrustedRemote',
