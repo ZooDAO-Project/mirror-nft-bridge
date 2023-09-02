@@ -34,7 +34,13 @@ contract Mirror is NonblockingLzApp, ReflectionCreator, FeeTaker, IERC721Receive
 	event LockedNFT(address operator, address from, uint256 tokenId, bytes data);
 
 	/// @dev Triggered in the end of the every bridge of token-reflection
-	event NFTBridged(address originalCollectionAddress, uint256[] tokenIds, string[] tokenURIs, address owner);
+	event NFTBridged(
+		address originalCollectionAddress,
+		address reflectionAddress,
+		uint256[] tokenIds,
+		string[] tokenURIs,
+		address owner
+	);
 
 	/// @dev Triggered when NFT unlocked from contract and returned to owner
 	event UnlockedNFT(address originalCollectionAddress, uint256[] tokenIds, address owner);
@@ -210,23 +216,23 @@ contract Mirror is NonblockingLzApp, ReflectionCreator, FeeTaker, IERC721Receive
 			bool isThereReflectionContract = reflection[originalCollectionAddr] != address(0);
 
 			// Get ReflectedNFT address from storage (if exists) or deploy
-			address collectionAddr;
+			address reflectionAddr;
 
 			if (isThereReflectionContract) {
-				collectionAddr = reflection[originalCollectionAddr];
+				reflectionAddr = reflection[originalCollectionAddr];
 			} else {
-				collectionAddr = _deployReflection(originalCollectionAddr, name, symbol);
+				reflectionAddr = _deployReflection(originalCollectionAddr, name, symbol);
 			}
 
 			// Make eligible to be able to bridge
-			isEligibleCollection[collectionAddr] = true;
+			isEligibleCollection[reflectionAddr] = true;
 
 			// Mint NFT-reflections
 			for (uint256 i = 0; i < tokenIds.length; i++) {
-				ReflectedNFT(collectionAddr).mint(_owner, tokenIds[i], tokenURIs[i]);
+				ReflectedNFT(reflectionAddr).mint(_owner, tokenIds[i], tokenURIs[i]);
 			}
 
-			emit NFTBridged(originalCollectionAddr, tokenIds, tokenURIs, _owner);
+			emit NFTBridged(originalCollectionAddr, reflectionAddr, tokenIds, tokenURIs, _owner);
 		}
 	}
 

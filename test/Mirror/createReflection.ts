@@ -13,6 +13,7 @@ import {
 } from './_.fixtures'
 import { ethers } from 'hardhat'
 import { ContractTransaction } from 'ethers'
+import { anyValue } from '@nomicfoundation/hardhat-chai-matchers/withArgs'
 
 export const createReflection = function () {
 	describe('if collection is reflection', function () {
@@ -123,7 +124,7 @@ export const createReflection = function () {
 
 		await expect(tx)
 			.to.emit(target, 'NFTBridged')
-			.withArgs(nft.address, [tokenId], [await nft.tokenURI(tokenId)], owner.address)
+			.withArgs(nft.address, anyValue, [tokenId], [await nft.tokenURI(tokenId)], owner.address)
 	})
 
 	it('should revert on repeating tokenIds', async function () {

@@ -167,7 +167,7 @@ export const reflect = function () {
 
 			await expect(tx)
 				.to.emit(target, 'NFTBridged')
-				.withArgs(nft.address, [tokenId], [await nft.tokenURI(tokenId)], owner.address)
+				.withArgs(nft.address, anyValue, [tokenId], [await nft.tokenURI(tokenId)], owner.address)
 		})
 
 		it('emits one NFTBridged event for multiple tokens', async function () {
@@ -177,6 +177,7 @@ export const reflect = function () {
 				.to.emit(target, 'NFTBridged')
 				.withArgs(
 					nft.address,
+					anyValue,
 					[tokenId, tokenId + 1, tokenId + 2],
 					[await nft.tokenURI(tokenId), await nft.tokenURI(tokenId + 1), await nft.tokenURI(tokenId + 2)],
 					owner.address
