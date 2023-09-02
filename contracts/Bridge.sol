@@ -14,8 +14,6 @@ contract Bridge is NonblockingLzApp, NftFactory, IBridge, IERC721Receiver {
 
 	using BytesLib for bytes;
 
-	mapping(address => bool) original;
-
 	mapping(address => bool) public isOriginalChainForCollection;
 
 	/* EVENTS */
@@ -24,8 +22,6 @@ contract Bridge is NonblockingLzApp, NftFactory, IBridge, IERC721Receiver {
 	event NFTBridged(address originalCollectionAddress, uint256 tokenId, string tokenURI, address owner);
 
 	event NFTReturned(address originalCollectionAddress, uint256 tokenId, address owner);
-
-	event TrustedRemoteSet(uint256 targetNetworkId, address trustedRemote);
 
 	event BridgeNFT(address collection, string name, string symbol, uint256 tokenId, string tokenURI, address owner);
 
@@ -82,17 +78,11 @@ contract Bridge is NonblockingLzApp, NftFactory, IBridge, IERC721Receiver {
 
 		bytes memory _payload = abi.encode(originalCollectionAddress, name, symbol, tokenId, tokenURI, msg.sender);
 
-		_checkGasLimit(targetNetworkId, FUNCTION_TYPE_SEND, _adapterParams, 1500000);
+		// _checkGasLimit(targetNetworkId, FUNCTION_TYPE_SEND, _adapterParams, 1500000);
 
 		_lzSend(targetNetworkId, _payload, _refundAddress, _zroPaymentAddress, _adapterParams, msg.value);
 
 		emit BridgeNFT(originalCollectionAddress, name, symbol, tokenId, tokenURI, msg.sender);
-	}
-
-	function getTrustedRemote(uint16 _remoteChainId) public view returns (bytes memory) {
-		bytes memory path = trustedRemoteLookup[_remoteChainId];
-		require(path.length != 0, 'LzApp: no trusted path record');
-		return path.slice(0, path.length - 20); // the last 20 bytes should be address(this)
 	}
 
 	function _nonblockingLzReceive(uint16, bytes memory, uint64, bytes memory _payload) internal virtual override {
