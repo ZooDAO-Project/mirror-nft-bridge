@@ -5,5 +5,5 @@ import { complexRoute } from './complexRoute'
 describe('Special test scenarios', function () {
 	it('complex route', complexRoute)
 	it('bridge with changing owner', bridgeWithChangingOwner)
-	it('after deploy of copy bridges should be cheaper', cheaperRepeatedBridges)
+	it('after deploy of reflection bridges should be cheaper', cheaperRepeatedBridges)
 })

@@ -38,18 +38,18 @@ export const bridgeWithChangingOwner = async function () {
 
 	expect(await nft.ownerOf(tokenId)).to.be.eq(ethBridge.address)
 
-	const moonCopyNftAddr = await moonBridge.copy(nft.address)
-	const moonCopy = (await ethers.getContractAt('NFT', moonCopyNftAddr)) as NFT
+	const moonReflectionNftAddr = await moonBridge.reflection(nft.address)
+	const moonReflection = (await ethers.getContractAt('NFT', moonReflectionNftAddr)) as NFT
 
-	expect(await moonCopy.ownerOf(tokenId)).to.be.eq(owner.address)
+	expect(await moonReflection.ownerOf(tokenId)).to.be.eq(owner.address)
 
 	// Sold NFT $ on moonbeam
-	await moonCopy.transferFrom(owner.address, signers[5].address, tokenId)
+	await moonReflection.transferFrom(owner.address, signers[5].address, tokenId)
 
 	await moonBridge
 		.connect(signers[5])
 		.createReflection(
-			moonCopyNftAddr,
+			moonReflectionNftAddr,
 			tokenId,
 			networkIds.ethNetworkId,
 			owner.address,
@@ -60,7 +60,7 @@ export const bridgeWithChangingOwner = async function () {
 			}
 		)
 
-	expect(await moonCopy.balanceOf(signers[5].address)).to.be.eq(0)
+	expect(await moonReflection.balanceOf(signers[5].address)).to.be.eq(0)
 
 	expect(await nft.ownerOf(tokenId)).to.be.eq(signers[5].address)
 }

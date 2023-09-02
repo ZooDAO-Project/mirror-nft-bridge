@@ -43,8 +43,8 @@ export async function createReflection(taskArgs: any, hre: HardhatRuntimeEnviron
 	const targetNetworkProviderUrl: string = (hre.config.networks[taskArgs.targetNetwork] as any)['url']
 	const targetNetworkProvider = ethers.getDefaultProvider(targetNetworkProviderUrl)
 
-	const isCopyDeployed =
-		(await target.connect(targetNetworkProvider).copy(taskArgs.collection)) !== ethers.constants.AddressZero
+	const isReflectionDeployed =
+		(await target.connect(targetNetworkProvider).reflection(taskArgs.collection)) !== ethers.constants.AddressZero
 
 	const { fees, adapterParams } = await getAdapterParamsAndFeesAmount(
 		nft,
@@ -53,7 +53,7 @@ export async function createReflection(taskArgs: any, hre: HardhatRuntimeEnviron
 		remoteChainId,
 		source,
 		lzEndpoint,
-		isCopyDeployed
+		isReflectionDeployed
 	)
 
 	console.log(`fees[0] (wei): ${fees[0]} / (eth): ${hre.ethers.utils.formatEther(fees[0])}`)
@@ -90,12 +90,12 @@ export async function getAdapterParamsAndFeesAmount(
 	targetNetworkId: number,
 	sourceBridge: Mirror,
 	lzEndpoint: LZEndpointMock,
-	isCopyDeployed: boolean
+	isReflectionDeployed: boolean
 ) {
 	const GasWithDeploy = '2100000'
 	const GasOnRegularBridge = '350000'
 
-	const RecommendedGas = isCopyDeployed ? GasOnRegularBridge : GasWithDeploy
+	const RecommendedGas = isReflectionDeployed ? GasOnRegularBridge : GasWithDeploy
 
 	const adapterParams = ethers.utils.solidityPack(['uint16', 'uint256'], [1, RecommendedGas]) // default adapterParams example
 	const abi = new ethers.utils.AbiCoder()

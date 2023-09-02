@@ -5,7 +5,7 @@ import { ZONFT, ZONFT__factory } from '../../typechain-types'
 import { mint } from './mint'
 import { tokenURI } from './tokenURI'
 
-export async function deployCopyNFT(name = 'ZooDAO Mocks', symbol = 'ZDMK'): Promise<ZONFT> {
+export async function deployReflectionNFT(name = 'ZooDAO Mocks', symbol = 'ZDMK'): Promise<ZONFT> {
 	const NFT = (await ethers.getContractFactory('zONFT')) as ZONFT__factory
 	const nft = await NFT.deploy(name, symbol)
 	await nft.deployed()
@@ -14,7 +14,7 @@ export async function deployCopyNFT(name = 'ZooDAO Mocks', symbol = 'ZDMK'): Pro
 
 describe('zONFT', function () {
 	it('deploys', async function () {
-		const nft = await loadFixture(deployCopyNFT)
+		const nft = await loadFixture(deployReflectionNFT)
 		expect(nft).not.to.be.undefined
 		expect(nft.address.length).to.be.eq(42)
 	})
@@ -23,7 +23,7 @@ describe('zONFT', function () {
 	describe('tokenURI', tokenURI)
 
 	it('tokens can be transferred', async function () {
-		const nft = await loadFixture(deployCopyNFT)
+		const nft = await loadFixture(deployReflectionNFT)
 		const signers = await ethers.getSigners()
 
 		await nft.mint(signers[1].address, 1, 'url.com')
@@ -34,7 +34,7 @@ describe('zONFT', function () {
 	})
 
 	it('Collection name and symbol are specified on deploy', async function () {
-		const nft = await deployCopyNFT('Different name', 'DS')
+		const nft = await deployReflectionNFT('Different name', 'DS')
 		expect(await nft.name()).to.be.eq('Different name')
 		expect(await nft.symbol()).to.be.eq('DS')
 	})

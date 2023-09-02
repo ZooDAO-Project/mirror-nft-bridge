@@ -50,7 +50,7 @@ export async function deployNFTWithMint() {
 
 // First time bridging collection
 // from ethereum (source) to moonbeam (target)
-// Deploys new copy contract on target chain
+// Deploys new reflection contract on target chain
 export async function simpleBridgeScenario(txReturnType: TxReturnType = TxReturnType.awaited) {
 	const { source, target, targetNetworkId, sourceLzEndpoint, targetLzEndpoint } = await loadFixture(deployBridge)
 	const { nft, signers, owner } = await loadFixture(deployNFTWithMint)
@@ -111,16 +111,16 @@ export async function simpleBridgeScenario(txReturnType: TxReturnType = TxReturn
 				)
 	}
 
-	const copyAddr = await target.copy(nft.address)
+	const reflectionAddr = await target.reflection(nft.address)
 
 	const zONFT = await ethers.getContractFactory('zONFT')
-	const copy = zONFT.attach(copyAddr) as ZONFT
+	const reflection = zONFT.attach(reflectionAddr) as ZONFT
 
 	return {
 		source,
 		target,
 		nft,
-		copy,
+		reflection,
 		tx,
 		signers,
 		owner,
@@ -191,10 +191,10 @@ export async function bridgeBackScenario(txReturnType: TxReturnType = TxReturnTy
 		{ value: fees[0] }
 	)
 
-	const copyAddr = await target.copy(nft.address)
+	const reflectionAddr = await target.reflection(nft.address)
 
 	const zONFT = await ethers.getContractFactory('zONFT')
-	const copy = zONFT.attach(copyAddr) as ZONFT
+	const reflection = zONFT.attach(reflectionAddr) as ZONFT
 
 	// Reversed flow
 	target = [source, (source = target)][0]
@@ -206,7 +206,7 @@ export async function bridgeBackScenario(txReturnType: TxReturnType = TxReturnTy
 	switch (txReturnType) {
 		case TxReturnType.awaited:
 			tx = await source.createReflection(
-				copy.address,
+				reflection.address,
 				tokenId,
 				targetNetworkId,
 				owner.address,
@@ -219,7 +219,7 @@ export async function bridgeBackScenario(txReturnType: TxReturnType = TxReturnTy
 			break
 		case TxReturnType.unawaited:
 			tx = source.createReflection(
-				copy.address,
+				reflection.address,
 				tokenId,
 				targetNetworkId,
 				owner.address,
@@ -233,7 +233,7 @@ export async function bridgeBackScenario(txReturnType: TxReturnType = TxReturnTy
 		case TxReturnType.arrowFunction:
 			tx = () =>
 				source.createReflection(
-					copy.address,
+					reflection.address,
 					tokenId,
 					targetNetworkId,
 					owner.address,
@@ -249,7 +249,7 @@ export async function bridgeBackScenario(txReturnType: TxReturnType = TxReturnTy
 		source,
 		target,
 		nft,
-		copy,
+		reflection,
 		tx,
 		signers,
 		owner,

@@ -2,12 +2,12 @@ import { loadFixture } from '@nomicfoundation/hardhat-network-helpers'
 import { expect } from 'chai'
 import { simpleBridgeScenario } from '../Mirror/_.fixtures'
 import { expectToBeRevertedWith } from '../_utils'
-import { deployCopyNFT } from './_.test'
+import { deployReflectionNFT } from './_.test'
 import { ethers } from 'hardhat'
 
 export const mint = function () {
 	it('mint tokens', async function () {
-		const nft = await loadFixture(deployCopyNFT)
+		const nft = await loadFixture(deployReflectionNFT)
 		const signers = await ethers.getSigners()
 
 		const mint = () => nft.mint(signers[1].address, 1, 'url.com')
@@ -16,9 +16,9 @@ export const mint = function () {
 	})
 
 	it(`Mint only by bridging contract (owner)`, async function () {
-		const { copy, owner } = await simpleBridgeScenario()
+		const { reflection, owner } = await simpleBridgeScenario()
 
-		const tx = copy.mint(owner.address, 111, 'url.com')
+		const tx = reflection.mint(owner.address, 111, 'url.com')
 
 		expectToBeRevertedWith(tx, 'Ownable')
 	})

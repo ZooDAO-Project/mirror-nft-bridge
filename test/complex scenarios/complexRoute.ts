@@ -35,13 +35,13 @@ export const complexRoute = async function () {
 
 	expect(await nft.ownerOf(tokenId)).to.be.eq(ethBridge.address)
 
-	const moonCopyNftAddr = await moonBridge.copy(nft.address)
-	const moonCopy = (await ethers.getContractAt('NFT', moonCopyNftAddr)) as NFT
+	const moonReflectionNftAddr = await moonBridge.reflection(nft.address)
+	const moonReflection = (await ethers.getContractAt('NFT', moonReflectionNftAddr)) as NFT
 
-	expect(await moonCopy.ownerOf(tokenId)).to.be.eq(owner.address)
+	expect(await moonReflection.ownerOf(tokenId)).to.be.eq(owner.address)
 
 	await moonBridge.createReflection(
-		moonCopyNftAddr,
+		moonReflectionNftAddr,
 		tokenId,
 		networkIds.arbNetworkId,
 		owner.address,
@@ -52,15 +52,15 @@ export const complexRoute = async function () {
 		}
 	)
 
-	expect(await moonCopy.balanceOf(owner.address)).to.be.eq(0)
+	expect(await moonReflection.balanceOf(owner.address)).to.be.eq(0)
 
-	const arbCopyNftAddr = await arbBridge.copy(nft.address)
-	const arbCopy = (await ethers.getContractAt('NFT', arbCopyNftAddr)) as NFT
+	const arbReflectionNftAddr = await arbBridge.reflection(nft.address)
+	const arbReflection = (await ethers.getContractAt('NFT', arbReflectionNftAddr)) as NFT
 
-	expect(await arbCopy.ownerOf(tokenId)).to.be.eq(owner.address)
+	expect(await arbReflection.ownerOf(tokenId)).to.be.eq(owner.address)
 
 	await arbBridge.createReflection(
-		arbCopyNftAddr,
+		arbReflectionNftAddr,
 		tokenId,
 		networkIds.ethNetworkId,
 		owner.address,
@@ -71,7 +71,7 @@ export const complexRoute = async function () {
 		}
 	)
 
-	expect(await arbCopy.balanceOf(owner.address)).to.be.eq(0)
+	expect(await arbReflection.balanceOf(owner.address)).to.be.eq(0)
 
 	expect(await nft.ownerOf(tokenId)).to.be.eq(owner.address)
 }

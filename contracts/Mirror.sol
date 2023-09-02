@@ -63,8 +63,8 @@ contract Mirror is NonblockingLzApp, NftFactory, IERC721Receiver {
 
 		address originalCollectionAddress;
 
-		if (isCopy[collectionAddr]) {
-			//	NFT is copy - burn
+		if (isReflection[collectionAddr]) {
+			//	NFT is reflection - burn
 			collection.burn(tokenId);
 			originalCollectionAddress = originalCollectionAddresses[collectionAddr];
 		} else {
@@ -113,14 +113,14 @@ contract Mirror is NonblockingLzApp, NftFactory, IERC721Receiver {
 
 			emit NFTReturned(originalCollectionAddr, tokenId, _owner);
 		} else {
-			bool isThereCopyContract = copy[originalCollectionAddr] != address(0);
+			bool isThereReflectionContract = reflection[originalCollectionAddr] != address(0);
 
 			address collectionAddr;
 
-			if (isThereCopyContract) {
-				collectionAddr = copy[originalCollectionAddr];
+			if (isThereReflectionContract) {
+				collectionAddr = reflection[originalCollectionAddr];
 			} else {
-				collectionAddr = _deployNewNft(originalCollectionAddr, name, symbol);
+				collectionAddr = _deployReflection(originalCollectionAddr, name, symbol);
 			}
 
 			zONFT(collectionAddr).mint(_owner, tokenId, tokenURI);

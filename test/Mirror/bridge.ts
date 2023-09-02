@@ -5,22 +5,22 @@ import { bridgeBackScenario, TxReturnType, simpleBridgeScenario, deployBridge, d
 import { ethers } from 'hardhat'
 
 export const bridge = function () {
-	describe('if collection is copy', function () {
-		it('burns copy NFT', async function () {
-			const { copy, tx, owner } = await bridgeBackScenario(TxReturnType.arrowFunction)
+	describe('if collection is reflection', function () {
+		it('burns reflection NFT', async function () {
+			const { reflection, tx, owner } = await bridgeBackScenario(TxReturnType.arrowFunction)
 
-			await expect(tx).to.changeTokenBalance(copy, owner, -1)
+			await expect(tx).to.changeTokenBalance(reflection, owner, -1)
 		})
 
-		it('sends and receives message with original collection address, not copy address', async function () {
-			const { source, target, copy, nft, tx, owner, tokenId } = await bridgeBackScenario()
+		it('sends and receives message with original collection address, not reflection address', async function () {
+			const { source, target, reflection, nft, tx, owner, tokenId } = await bridgeBackScenario()
 
 			await expect(tx)
 				.to.emit(source, 'BridgeNFT')
 				.withArgs(
 					nft.address,
-					await copy.name(),
-					await copy.symbol(),
+					await reflection.name(),
+					await reflection.symbol(),
 					tokenId,
 					await nft.tokenURI(tokenId),
 					owner.address
