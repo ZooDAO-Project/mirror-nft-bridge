@@ -3,6 +3,7 @@ import * as dotenv from 'dotenv'
 import { HardhatUserConfig, task } from 'hardhat/config'
 import '@nomicfoundation/hardhat-toolbox'
 import 'hardhat-gas-reporter'
+import 'hardhat-tracer'
 
 dotenv.config()
 
