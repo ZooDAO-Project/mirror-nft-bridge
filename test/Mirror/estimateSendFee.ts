@@ -28,13 +28,10 @@ export const estimateSendFee = async function () {
 		)
 		const fees = await source.estimateSendFee(nft.address, tokenId, targetNetworkId, false, adapterParams)
 
-		const writableFees = JSON.parse(JSON.stringify(fees))
-		log(writableFees)
-		const feeAmountToPlatform = await source.feeAmount()
-		writableFees[0] = writableFees[0].sub(feeAmountToPlatform)
-		writableFees.nativeFee = writableFees.nativeFee.sub(feeAmountToPlatform)
+		const feeAmount = await source.feeAmount()
 
-		expect(writableFees).to.be.deep.eq(feesFromEndpoint)
+		expect(fees.nativeFee).to.be.eq(feesFromEndpoint.nativeFee.add(feeAmount))
+		expect(fees.zroFee).to.be.eq(feesFromEndpoint.zroFee)
 	})
 
 	it('Batch send estimation with multiple tokenIds and same amount of tokenURIs', async function () {
@@ -66,10 +63,9 @@ export const estimateSendFee = async function () {
 			adapterParams
 		)
 
-		const feeAmountToPlatform = await source.feeAmount()
-		batchFees[0] = batchFees[0].sub(feeAmountToPlatform)
-		batchFees.nativeFee = batchFees.nativeFee.sub(feeAmountToPlatform)
+		const feeAmount = await source.feeAmount()
 
-		expect(batchFees).to.be.deep.eq(feesFromEndpoint)
+		expect(batchFees.nativeFee).to.be.eq(feesFromEndpoint.nativeFee.add(feeAmount))
+		expect(batchFees.zroFee).to.be.eq(feesFromEndpoint.zroFee)
 	})
 }
