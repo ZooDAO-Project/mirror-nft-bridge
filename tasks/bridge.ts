@@ -32,6 +32,7 @@ export async function bridge(taskArgs: any, hre: HardhatRuntimeEnvironment) {
 	const remoteBridgeAddress = bridgeAddresses[mode][targetNetwork as SupportedNetwork]
 
 	const source = Bridge.attach(localBridgeAddress) as Bridge
+
 	const target = Bridge.attach(remoteBridgeAddress) as Bridge
 
 	const nft = NFT.attach(taskArgs.collection) as NFT
@@ -39,7 +40,11 @@ export async function bridge(taskArgs: any, hre: HardhatRuntimeEnvironment) {
 	const tx = await nft.approve(source.address, taskArgs.tokenId)
 	await tx.wait()
 
-	const isCopyDeployed = (await target.copy(taskArgs.collection)) !== ethers.constants.AddressZero
+	const targetNetworkProviderUrl: string = (hre.config.networks[taskArgs.targetNetwork] as any)['url']
+	const targetNetworkProvider = ethers.getDefaultProvider(targetNetworkProviderUrl)
+
+	const isCopyDeployed =
+		(await target.connect(targetNetworkProvider).copy(taskArgs.collection)) !== ethers.constants.AddressZero
 
 	const { fees, adapterParams } = await getAdapterParamsAndFeesAmount(
 		nft,
