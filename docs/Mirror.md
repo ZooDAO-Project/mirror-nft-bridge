@@ -26,7 +26,7 @@ Limit for amount of tokens being bridged in single transaction
 mapping(address => bool) isOriginalChainForCollection
 ```
 
-_Used in createReflection() and _reflect() functions to determine if collection address is original for that chain_
+_Used in createReflection() and \_reflect() functions to determine if collection address is original for that chain_
 
 ### isEligibleCollection
 
@@ -36,10 +36,10 @@ mapping(address => bool) isEligibleCollection
 
 Checks if collection eligible to bridge
 
-### NFTReceived
+### LockedNFT
 
 ```solidity
-event NFTReceived(address operator, address from, uint256 tokenId, bytes data)
+event LockedNFT(address operator, address from, uint256 tokenId, bytes data)
 ```
 
 _Triggered on NFT being transfered from user to lock it on contract if collection is original_
@@ -52,10 +52,10 @@ event NFTBridged(address originalCollectionAddress, uint256[] tokenIds, string[]
 
 _Triggered in the end of the every bridge of token-reflection_
 
-### NFTReturned
+### UnlockedNFT
 
 ```solidity
-event NFTReturned(address originalCollectionAddress, uint256[] tokenIds, address owner)
+event UnlockedNFT(address originalCollectionAddress, uint256[] tokenIds, address owner)
 ```
 
 _Triggered when NFT unlocked from contract and returned to owner_
@@ -100,9 +100,9 @@ Bridges NFT to target chain
 Locks original NFT on contract before bridge
 Burns reflection of NFT on bridge
 
-__adapterParams`s gasLimit should be 2,200,000 for bridge of single token to a new chain (chain where is no ReflectedNFT contract)
+\__adapterParams`s gasLimit should be 2,200,000 for bridge of single token to a new chain (chain where is no ReflectedNFT contract)
 _adapterParams`s gasLimit should be 300,000 for bridge of signle token to already deployed ReflectedNFT contract
-_adapterParams`s gasLimit should be 300,000 for bridge of signle token to already deployed ReflectedNFT contract
+\_adapterParams`s gasLimit should be 300,000 for bridge of signle token to already deployed ReflectedNFT contract
 Original NFT collection address is used as unique identifier at all chains
 Original NFT collection is passed as parameter at every bridge process to be used as identifier
 Passes in message name and symbol of collection to deploy ReflectedNFT contract if needed
@@ -110,16 +110,16 @@ Passes in message tokenURI and tokenId of bridged NFT top mint exact same NFT on
 
 #### Parameters
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| collectionAddr | address | A |
-| tokenIds | uint256[] | Array of tokenIds to bridge to target chain |
-| targetNetworkId | uint16 | target network ID from LayerZero's ecosystem (different from chain ID) |
-| _refundAddress | address payable | Address to return excessive native tokens |
-| _zroPaymentAddress | address | Currently takes zero address, but left as parameter according to LayerZero`s guidelines |
-| _adapterParams | bytes | abi.encode(1, gasLimit) gasLimit for transaction on target chain |
+| Name                | Type            | Description                                                                             |
+| ------------------- | --------------- | --------------------------------------------------------------------------------------- |
+| collectionAddr      | address         | A                                                                                       |
+| tokenIds            | uint256[]       | Array of tokenIds to bridge to target chain                                             |
+| targetNetworkId     | uint16          | target network ID from LayerZero's ecosystem (different from chain ID)                  |
+| \_refundAddress     | address payable | Address to return excessive native tokens                                               |
+| \_zroPaymentAddress | address         | Currently takes zero address, but left as parameter according to LayerZero`s guidelines |
+| \_adapterParams     | bytes           | abi.encode(1, gasLimit) gasLimit for transaction on target chain                        |
 
-### _nonblockingLzReceive
+### \_nonblockingLzReceive
 
 ```solidity
 function _nonblockingLzReceive(uint16, bytes, uint64, bytes payload) internal virtual
@@ -127,9 +127,9 @@ function _nonblockingLzReceive(uint16, bytes, uint64, bytes payload) internal vi
 
 _Function inherited from NonBlockingLzApp
 Called by lzReceive() that is triggered by LzEndpoint
-Calles _reflect() to finish bridge process_
+Calles \_reflect() to finish bridge process_
 
-### _reflect
+### \_reflect
 
 ```solidity
 function _reflect(address originalCollectionAddr, string name, string symbol, uint256[] tokenIds, string[] tokenURIs, address _owner) internal
@@ -143,14 +143,14 @@ Returns (unlocks) NFT to owner if current chain is original for collection
 
 #### Parameters
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| originalCollectionAddr | address | Address of original collection on original chain as unique identifier |
-| name | string | name of original collection to mint ReflectedNFT if needed |
-| symbol | string | symbol of original collection to mint ReflectedNFT if needed |
-| tokenIds | uint256[] | Array of tokenIds of bridged NFTs to mint exact same tokens |
-| tokenURIs | string[] | Array of tokenURIs of bridged NFTs to mint exact same tokens |
-| _owner | address | Address to mint or return token to |
+| Name                   | Type      | Description                                                           |
+| ---------------------- | --------- | --------------------------------------------------------------------- |
+| originalCollectionAddr | address   | Address of original collection on original chain as unique identifier |
+| name                   | string    | name of original collection to mint ReflectedNFT if needed            |
+| symbol                 | string    | symbol of original collection to mint ReflectedNFT if needed          |
+| tokenIds               | uint256[] | Array of tokenIds of bridged NFTs to mint exact same tokens           |
+| tokenURIs              | string[]  | Array of tokenURIs of bridged NFTs to mint exact same tokens          |
+| \_owner                | address   | Address to mint or return token to                                    |
 
 ### changeCollectionEligibility
 
@@ -164,10 +164,10 @@ _only owner can call_
 
 #### Parameters
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| collection | address | collection address |
-| eligibility | bool | boolean for eligibilty |
+| Name        | Type    | Description            |
+| ----------- | ------- | ---------------------- |
+| collection  | address | collection address     |
+| eligibility | bool    | boolean for eligibilty |
 
 ### changeReflectionAmountLimit
 
@@ -181,8 +181,8 @@ _only owner can call_
 
 #### Parameters
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
+| Name                     | Type    | Description                                                |
+| ------------------------ | ------- | ---------------------------------------------------------- |
 | newReflectionAmountLimit | uint256 | Amount of tokens that can be bridged in single transaction |
 
 ### onERC721Received
@@ -191,15 +191,15 @@ _only owner can call_
 function onERC721Received(address operator, address from, uint256 tokenId, bytes data) external returns (bytes4)
 ```
 
-_Whenever an {IERC721} `tokenId` token is transferred to this contract via {IERC721-safeTransferFrom}
+\_Whenever an {IERC721} `tokenId` token is transferred to this contract via {IERC721-safeTransferFrom}
 by `operator` from `from`, this function is called.
 
 It must return its Solidity selector to confirm the token transfer.
 If any other value is returned or the interface is not implemented by the recipient, the transfer will be reverted.
 
-The selector can be obtained in Solidity with `IERC721Receiver.onERC721Received.selector`._
+The selector can be obtained in Solidity with `IERC721Receiver.onERC721Received.selector`.\_
 
-### _toSingletonArray
+### \_toSingletonArray
 
 ```solidity
 function _toSingletonArray(uint256 element) internal pure returns (uint256[])
@@ -207,4 +207,3 @@ function _toSingletonArray(uint256 element) internal pure returns (uint256[])
 
 _Called in createReflection() to make array from signle element
 Using [element] drops "Invalid implicit conversion from uint256[1] memory to uint256[]"_
-

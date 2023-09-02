@@ -31,13 +31,13 @@ contract Mirror is NonblockingLzApp, ReflectionCreator, FeeTaker, IERC721Receive
 
 	/* EVENTS */
 	/// @dev Triggered on NFT being transfered from user to lock it on contract if collection is original
-	event NFTReceived(address operator, address from, uint256 tokenId, bytes data);
+	event LockedNFT(address operator, address from, uint256 tokenId, bytes data);
 
 	/// @dev Triggered in the end of the every bridge of token-reflection
 	event NFTBridged(address originalCollectionAddress, uint256[] tokenIds, string[] tokenURIs, address owner);
 
 	/// @dev Triggered when NFT unlocked from contract and returned to owner
-	event NFTReturned(address originalCollectionAddress, uint256[] tokenIds, address owner);
+	event UnlockedNFT(address originalCollectionAddress, uint256[] tokenIds, address owner);
 
 	/// @dev Triggered at the start of every bridge process
 	event BridgeNFT(
@@ -205,7 +205,7 @@ contract Mirror is NonblockingLzApp, ReflectionCreator, FeeTaker, IERC721Receive
 				ReflectedNFT(originalCollectionAddr).safeTransferFrom(address(this), _owner, tokenIds[i]);
 			}
 
-			emit NFTReturned(originalCollectionAddr, tokenIds, _owner);
+			emit UnlockedNFT(originalCollectionAddr, tokenIds, _owner);
 		} else {
 			bool isThereReflectionContract = reflection[originalCollectionAddr] != address(0);
 
@@ -262,7 +262,8 @@ contract Mirror is NonblockingLzApp, ReflectionCreator, FeeTaker, IERC721Receive
 		uint256 tokenId,
 		bytes calldata data
 	) external returns (bytes4) {
-		emit NFTReceived(operator, from, tokenId, data);
+		require(operator == address(this), 'Mirror: only Mirror contract can initiate lock');
+		emit LockedNFT(operator, from, tokenId, data);
 		return IERC721Receiver.onERC721Received.selector;
 	}
 

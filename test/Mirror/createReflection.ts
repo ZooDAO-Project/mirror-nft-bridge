@@ -50,7 +50,7 @@ export const createReflection = function () {
 					owner.address
 				)
 
-			await expect(tx).to.emit(target, 'NFTReturned').withArgs(nft.address, [tokenId], owner.address)
+			await expect(tx).to.emit(target, 'UnlockedNFT').withArgs(nft.address, [tokenId], owner.address)
 		})
 	})
 

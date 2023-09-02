@@ -32,10 +32,10 @@ export const reflect = function () {
 			expect(await nft.ownerOf(tokenId + 2)).to.be.eq(owner.address)
 		})
 
-		it('emits NFTReturned event', async function () {
+		it('emits UnlockedNFT event', async function () {
 			const { target, nft, tx, tokenId, owner } = await bridgeBackScenario()
 
-			await expect(tx).to.emit(target, 'NFTReturned').withArgs(nft.address, [tokenId], owner.address)
+			await expect(tx).to.emit(target, 'UnlockedNFT').withArgs(nft.address, [tokenId], owner.address)
 		})
 	})
 
