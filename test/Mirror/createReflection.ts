@@ -172,4 +172,67 @@ export const createReflection = function () {
 
 		await expectToBeRevertedWith(tx, 'ERC721: transfer from incorrect owner')
 	})
+
+	it('should be able to bridge 10 NFTs', async function () {
+		const NFTsToBridge = 10
+		const { nft, tx, owner } = await simpleBridgeMultipleScenario(TxReturnType.arrowFunction, NFTsToBridge)
+
+		await expect(tx).to.changeTokenBalance(nft, owner, -10)
+	})
+
+	it.only('should revert if msg.sender is not the NFT owner on bridge', async function () {
+		const { nft, owner, signers, source, tokenId, targetNetworkId } = await simpleBridgeScenario(
+			TxReturnType.arrowFunction
+		)
+
+		const { fees, adapterParams } = await getAdapterParamsAndFeesAmount(
+			nft,
+			[tokenId],
+			targetNetworkId,
+			source,
+			false
+		)
+
+		const tx = source
+			.connect(signers[5])
+			.createReflection(
+				nft.address,
+				[tokenId],
+				targetNetworkId,
+				owner.address,
+				ethers.constants.AddressZero,
+				adapterParams,
+				{ value: fees[0] }
+			)
+
+		await expectToBeRevertedWith(tx, 'ERC721: transfer from incorrect owner')
+	})
+
+	it.only('should revert if msg.sender is not the NFT owner on bridge BACK', async function () {
+		const { nft, reflection, owner, signers, source, tokenId, targetNetworkId } = await bridgeBackScenario(
+			TxReturnType.arrowFunction
+		)
+
+		const { fees, adapterParams } = await getAdapterParamsAndFeesAmount(
+			nft,
+			[tokenId],
+			targetNetworkId,
+			source,
+			false
+		)
+
+		const tx = source
+			.connect(signers[5])
+			.createReflection(
+				reflection.address,
+				[tokenId],
+				targetNetworkId,
+				owner.address,
+				ethers.constants.AddressZero,
+				adapterParams,
+				{ value: fees[0] }
+			)
+
+		await expectToBeRevertedWith(tx, 'ReflectedNFT: caller is not the owner')
+	})
 }

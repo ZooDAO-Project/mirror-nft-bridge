@@ -257,32 +257,35 @@ export async function bridgeBackScenario(txReturnType: TxReturnType = TxReturnTy
 // First time bridging collection
 // from ethereum (source) to moonbeam (target)
 // Deploys new reflection contract on target chain
-export async function simpleBridgeMultipleScenario(txReturnType: TxReturnType = TxReturnType.awaited) {
+export async function simpleBridgeMultipleScenario(
+	txReturnType: TxReturnType = TxReturnType.awaited,
+	NFTsToBridge = 3
+) {
 	const { source, target, targetNetworkId, sourceLzEndpoint, targetLzEndpoint } = await loadFixture(deployBridge)
 	const { nft, signers, owner } = await loadFixture(deployNFTWithMint)
 
 	await source.changeCollectionEligibility(nft.address, true)
 
-	await nft.mint(owner.address, 2)
+	await nft.mint(owner.address, NFTsToBridge - 1)
 
 	const tokenId = 1
+	const tokenIds: number[] = []
+
+	for (let i = 0; i < NFTsToBridge; i++) {
+		tokenIds.push(i + 1)
+	}
+
 	await nft.setApprovalForAll(source.address, true)
 
 	let tx
 
-	const { fees, adapterParams } = await getAdapterParamsAndFeesAmount(
-		nft,
-		[tokenId, tokenId + 1, tokenId + 2],
-		targetNetworkId,
-		source,
-		false
-	)
+	const { fees, adapterParams } = await getAdapterParamsAndFeesAmount(nft, tokenIds, targetNetworkId, source, false)
 
 	switch (txReturnType) {
 		case TxReturnType.awaited:
 			tx = await source.createReflection(
 				nft.address,
-				[tokenId, tokenId + 1, tokenId + 2],
+				tokenIds,
 				targetNetworkId,
 				owner.address,
 				ethers.constants.AddressZero,
@@ -295,7 +298,7 @@ export async function simpleBridgeMultipleScenario(txReturnType: TxReturnType = 
 		case TxReturnType.unawaited:
 			tx = source.createReflection(
 				nft.address,
-				[tokenId, tokenId + 1, tokenId + 2],
+				tokenIds,
 				targetNetworkId,
 				owner.address,
 				ethers.constants.AddressZero,
@@ -309,7 +312,7 @@ export async function simpleBridgeMultipleScenario(txReturnType: TxReturnType = 
 			tx = () =>
 				source.createReflection(
 					nft.address,
-					[tokenId, tokenId + 1, tokenId + 2],
+					tokenIds,
 					targetNetworkId,
 					owner.address,
 					ethers.constants.AddressZero,
@@ -343,7 +346,10 @@ export async function simpleBridgeMultipleScenario(txReturnType: TxReturnType = 
 // Bridging back NFT to original chain
 // from moonbeam (source) to ethereum (target)
 // Burns NFT on source (moon) and unlocks original on target (eth)
-export async function bridgeBackMultipleScenario(txReturnType: TxReturnType = TxReturnType.awaited) {
+export async function bridgeBackMultipleScenario(
+	txReturnType: TxReturnType = TxReturnType.awaited,
+	NFTsToBridgeBack = 3
+) {
 	// eslint-disable-next-line prefer-const
 	let { source, target, targetNetworkId, sourceLzEndpoint, targetLzEndpoint, sourceNetworkId } = await loadFixture(
 		deployBridge
@@ -353,21 +359,23 @@ export async function bridgeBackMultipleScenario(txReturnType: TxReturnType = Tx
 
 	await source.changeCollectionEligibility(nft.address, true)
 
-	await nft.mint(owner.address, 2)
+	await nft.mint(owner.address, NFTsToBridgeBack - 1) // 1 already minted in deployNFTWithMint fixture
+
 	const tokenId = 1
+
+	const tokenIds: number[] = []
+
+	for (let i = 0; i < NFTsToBridgeBack; i++) {
+		tokenIds.push(i + 1)
+	}
+
 	await nft.setApprovalForAll(source.address, true)
 
-	const { fees, adapterParams } = await getAdapterParamsAndFeesAmount(
-		nft,
-		[tokenId, tokenId + 1, tokenId + 2],
-		targetNetworkId,
-		source,
-		false
-	)
+	const { fees, adapterParams } = await getAdapterParamsAndFeesAmount(nft, tokenIds, targetNetworkId, source, false)
 
 	await source.createReflection(
 		nft.address,
-		[tokenId, tokenId + 1, tokenId + 2],
+		tokenIds,
 		targetNetworkId,
 		owner.address,
 		ethers.constants.AddressZero,
@@ -387,19 +395,13 @@ export async function bridgeBackMultipleScenario(txReturnType: TxReturnType = Tx
 
 	let tx
 
-	const bridgeBackParams = await getAdapterParamsAndFeesAmount(
-		nft,
-		[tokenId, tokenId + 1, tokenId + 2],
-		targetNetworkId,
-		source,
-		true
-	)
+	const bridgeBackParams = await getAdapterParamsAndFeesAmount(nft, tokenIds, targetNetworkId, source, true)
 
 	switch (txReturnType) {
 		case TxReturnType.awaited:
 			tx = await source.createReflection(
 				reflection.address,
-				[tokenId, tokenId + 1, tokenId + 2],
+				tokenIds,
 				targetNetworkId,
 				owner.address,
 				ethers.constants.AddressZero,
@@ -412,7 +414,7 @@ export async function bridgeBackMultipleScenario(txReturnType: TxReturnType = Tx
 		case TxReturnType.unawaited:
 			tx = source.createReflection(
 				reflection.address,
-				[tokenId, tokenId + 1, tokenId + 2],
+				tokenIds,
 				targetNetworkId,
 				owner.address,
 				ethers.constants.AddressZero,
@@ -426,7 +428,7 @@ export async function bridgeBackMultipleScenario(txReturnType: TxReturnType = Tx
 			tx = () =>
 				source.createReflection(
 					reflection.address,
-					[tokenId, tokenId + 1, tokenId + 2],
+					tokenIds,
 					targetNetworkId,
 					owner.address,
 					ethers.constants.AddressZero,

@@ -10,6 +10,7 @@ import {
 	simpleBridgeMultipleScenario,
 } from './_.fixtures'
 import { ethers } from 'hardhat'
+import { ContractTransaction } from 'ethers'
 
 export const reflect = function () {
 	describe('if bridged to original chain', function () {
@@ -102,8 +103,7 @@ export const reflect = function () {
 			})
 
 			it(`bridges NFT to existing contract`, async function () {
-				const { source, target, nft, owner, targetNetworkId, sourceLzEndpoint, reflection } =
-					await simpleBridgeScenario()
+				const { source, nft, owner, targetNetworkId, reflection } = await simpleBridgeScenario()
 
 				await nft.mint(owner.address, 1)
 				const tokenId = 2
@@ -182,5 +182,12 @@ export const reflect = function () {
 					owner.address
 				)
 		})
+	})
+
+	it('should be able to bridge back 10 NFTs', async function () {
+		const NFTsToBridge = 10
+		const { nft, tx, owner } = await bridgeBackMultipleScenario(TxReturnType.arrowFunction, NFTsToBridge)
+
+		await expect(tx).to.changeTokenBalance(nft, owner, 10)
 	})
 }
