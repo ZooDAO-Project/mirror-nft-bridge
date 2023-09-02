@@ -20,19 +20,26 @@ export async function bridge(taskArgs: any, hre: HardhatRuntimeEnvironment) {
 	const remoteChainId: any = CHAIN_ID[targetNetwork]
 
 	const Bridge = await hre.ethers.getContractFactory('Bridge')
+
 	const lzEndpointAddr = LzEndpoints[hre.network.name as keyof typeof LzEndpoints]
 	const lzEndpoint = (await hre.ethers.getContractAt('ILayerZeroEndpoint', lzEndpointAddr)) as LZEndpointMock
+
 	const NFT = await hre.ethers.getContractFactory('NFT')
 
 	const mode: keyof typeof bridgeAddresses = taskArgs.mode || 'test'
 	const network = hre.network.name as SupportedNetwork
 	const localBridgeAddress = bridgeAddresses[mode][network]
+	const remoteBridgeAddress = bridgeAddresses[mode][targetNetwork as SupportedNetwork]
+
 	const source = Bridge.attach(localBridgeAddress) as Bridge
+	const target = Bridge.attach(remoteBridgeAddress) as Bridge
 
 	const nft = NFT.attach(taskArgs.collection) as NFT
 
 	const tx = await nft.approve(source.address, taskArgs.tokenId)
 	await tx.wait()
+
+	const isCopyDeployed = (await target.copy(taskArgs.collection)) !== ethers.constants.AddressZero
 
 	const { fees, adapterParams } = await getAdapterParamsAndFeesAmount(
 		nft,
@@ -40,7 +47,8 @@ export async function bridge(taskArgs: any, hre: HardhatRuntimeEnvironment) {
 		owner,
 		remoteChainId,
 		source,
-		lzEndpoint
+		lzEndpoint,
+		isCopyDeployed
 	)
 
 	console.log(`fees[0] (wei): ${fees[0]} / (eth): ${hre.ethers.utils.formatEther(fees[0])}`)
@@ -76,9 +84,14 @@ export async function getAdapterParamsAndFeesAmount(
 	owner: SignerWithAddress,
 	targetNetworkId: number,
 	sourceBridge: Bridge,
-	lzEndpoint: LZEndpointMock
+	lzEndpoint: LZEndpointMock,
+	isCopyDeployed: boolean
 ) {
-	const RecommendedGas = '2000000'
+	const GasWithDeploy = '2100000'
+	const GasOnRegularBridge = '350000'
+
+	const RecommendedGas = isCopyDeployed ? GasOnRegularBridge : GasWithDeploy
+
 	const adapterParams = ethers.utils.solidityPack(['uint16', 'uint256'], [1, RecommendedGas]) // default adapterParams example
 	const abi = new ethers.utils.AbiCoder()
 
