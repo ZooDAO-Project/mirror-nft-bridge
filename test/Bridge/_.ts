@@ -1,7 +1,6 @@
 import { loadFixture } from '@nomicfoundation/hardhat-network-helpers'
 import { expect } from 'chai'
 import { bridge } from './bridge'
-import { setTrustedRemote } from './setTrustedRemote'
 import { receive } from './receive'
 import { deployBridge } from './_.fixtures'
 
@@ -18,5 +17,4 @@ describe('Bridge', function () {
 	// })
 	describe('bridge()', bridge)
 	describe('receive()', receive)
-	xdescribe('setTrustedRemote()', setTrustedRemote)
 })
