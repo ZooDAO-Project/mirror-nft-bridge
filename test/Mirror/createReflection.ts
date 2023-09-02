@@ -180,7 +180,7 @@ export const createReflection = function () {
 		await expect(tx).to.changeTokenBalance(nft, owner, -10)
 	})
 
-	it.only('should revert if msg.sender is not the NFT owner on bridge', async function () {
+	it('should revert if msg.sender is not the NFT owner on bridge', async function () {
 		const { nft, owner, signers, source, tokenId, targetNetworkId } = await simpleBridgeScenario(
 			TxReturnType.arrowFunction
 		)
@@ -208,7 +208,7 @@ export const createReflection = function () {
 		await expectToBeRevertedWith(tx, 'ERC721: transfer from incorrect owner')
 	})
 
-	it.only('should revert if msg.sender is not the NFT owner on bridge BACK', async function () {
+	it('should revert if msg.sender is not the NFT owner on bridge BACK', async function () {
 		const { nft, reflection, owner, signers, source, tokenId, targetNetworkId } = await bridgeBackScenario(
 			TxReturnType.arrowFunction
 		)
@@ -234,5 +234,78 @@ export const createReflection = function () {
 			)
 
 		await expectToBeRevertedWith(tx, 'ReflectedNFT: caller is not the owner')
+	})
+
+	it('should revert on empty tokenIds array', async function () {
+		const { nft, owner, source, tokenId, targetNetworkId } = await simpleBridgeScenario(TxReturnType.arrowFunction)
+
+		const { fees, adapterParams } = await getAdapterParamsAndFeesAmount(
+			nft,
+			[tokenId],
+			targetNetworkId,
+			source,
+			false
+		)
+
+		const tx = source.createReflection(
+			nft.address,
+			[],
+			targetNetworkId,
+			owner.address,
+			ethers.constants.AddressZero,
+			adapterParams,
+			{ value: fees[0] }
+		)
+
+		await expectToBeRevertedWith(tx, "Mirror: tokenIds wern't provided")
+	})
+
+	it('should revert on collection address is zero', async function () {
+		const { nft, owner, source, tokenId, targetNetworkId } = await simpleBridgeScenario(TxReturnType.arrowFunction)
+
+		const { fees, adapterParams } = await getAdapterParamsAndFeesAmount(
+			nft,
+			[tokenId],
+			targetNetworkId,
+			source,
+			false
+		)
+
+		const tx = source.createReflection(
+			ethers.constants.AddressZero,
+			[tokenId],
+			targetNetworkId,
+			owner.address,
+			ethers.constants.AddressZero,
+			adapterParams,
+			{ value: fees[0] }
+		)
+
+		await expectToBeRevertedWith(tx, 'Mirror: collection is not eligible to make reflection of')
+	})
+
+	it('should revert on incorrect target network ID', async function () {
+		const { nft, owner, source, tokenId } = await simpleBridgeScenario(TxReturnType.arrowFunction)
+
+		const incorrectTargetNetowrkId = 100
+		const { fees, adapterParams } = await getAdapterParamsAndFeesAmount(
+			nft,
+			[tokenId],
+			incorrectTargetNetowrkId,
+			source,
+			false
+		)
+
+		const tx = source.createReflection(
+			nft.address,
+			[tokenId],
+			incorrectTargetNetowrkId,
+			owner.address,
+			ethers.constants.AddressZero,
+			adapterParams,
+			{ value: fees[0] }
+		)
+
+		await expectToBeRevertedWith(tx, 'LzApp: destination chain is not a trusted source')
 	})
 }

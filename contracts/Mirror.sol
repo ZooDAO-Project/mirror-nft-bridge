@@ -74,6 +74,7 @@ contract Mirror is NonblockingLzApp, ReflectionCreator, IERC721Receiver {
 		bytes memory _adapterParams
 	) public payable {
 		require(isEligibleCollection[collectionAddr], 'Mirror: collection is not eligible to make reflection of');
+		require(tokenIds.length > 0, "Mirror: tokenIds wern't provided");
 
 		ReflectedNFT collection = ReflectedNFT(collectionAddr);
 
