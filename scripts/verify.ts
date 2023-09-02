@@ -10,7 +10,7 @@ async function main() {
 
 	const args = ['ZooDAO Test Collection', 'ZDTC']
 
-	await verifyContract(contractAddr, args, 'contracts/zONFT.sol:zONFT')
+	await verifyContract(contractAddr, args, 'contracts/ReflectedNFT.sol:ReflectedNFT')
 }
 
 // We recommend this pattern to be able to use async/await everywhere

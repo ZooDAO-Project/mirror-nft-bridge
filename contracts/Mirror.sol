@@ -3,12 +3,12 @@
 pragma solidity 0.8.18;
 
 import '@openzeppelin/contracts/access/Ownable.sol';
-import './NftFactory.sol';
+import './ReflectionCreator.sol';
 import '@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol';
 import '@layerzerolabs/solidity-examples/contracts/token/onft/ONFT721Core.sol';
 import '@layerzerolabs/solidity-examples/contracts/lzApp/NonblockingLzApp.sol';
 
-contract Mirror is NonblockingLzApp, NftFactory, IERC721Receiver {
+contract Mirror is NonblockingLzApp, ReflectionCreator, IERC721Receiver {
 	uint16 public constant FUNCTION_TYPE_SEND = 1;
 
 	using BytesLib for bytes;
@@ -52,7 +52,7 @@ contract Mirror is NonblockingLzApp, NftFactory, IERC721Receiver {
 		bool useZro,
 		bytes memory adapterParams
 	) public view returns (uint nativeFee, uint zroFee) {
-		zONFT collection = zONFT(collectionAddr);
+		ReflectedNFT collection = ReflectedNFT(collectionAddr);
 
 		string memory name = collection.name();
 		string memory symbol = collection.symbol();
@@ -79,7 +79,7 @@ contract Mirror is NonblockingLzApp, NftFactory, IERC721Receiver {
 	) public payable {
 		require(isEligibleCollection[collectionAddr], 'Mirror: collection is not eligible to make reflection of');
 
-		zONFT collection = zONFT(collectionAddr);
+		ReflectedNFT collection = ReflectedNFT(collectionAddr);
 
 		string memory name = collection.name();
 		string memory symbol = collection.symbol();
@@ -147,7 +147,7 @@ contract Mirror is NonblockingLzApp, NftFactory, IERC721Receiver {
 			// Unlock NFT and return to owner
 
 			for (uint256 i = 0; i < tokenIds.length; i++) {
-				zONFT(originalCollectionAddr).safeTransferFrom(address(this), _owner, tokenIds[i]);
+				ReflectedNFT(originalCollectionAddr).safeTransferFrom(address(this), _owner, tokenIds[i]);
 			}
 
 			emit NFTReturned(originalCollectionAddr, tokenIds, _owner);
@@ -165,7 +165,7 @@ contract Mirror is NonblockingLzApp, NftFactory, IERC721Receiver {
 			isEligibleCollection[collectionAddr] = true;
 
 			for (uint256 i = 0; i < tokenIds.length; i++) {
-				zONFT(collectionAddr).mint(_owner, tokenIds[i], tokenURIs[i]);
+				ReflectedNFT(collectionAddr).mint(_owner, tokenIds[i], tokenURIs[i]);
 			}
 
 			emit NFTBridged(originalCollectionAddr, tokenIds, tokenURIs, _owner);

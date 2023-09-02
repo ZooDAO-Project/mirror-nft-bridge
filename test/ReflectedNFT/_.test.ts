@@ -6,13 +6,13 @@ import { mint } from './mint'
 import { tokenURI } from './tokenURI'
 
 export async function deployReflectionNFT(name = 'ZooDAO Mocks', symbol = 'ZDMK'): Promise<ZONFT> {
-	const NFT = (await ethers.getContractFactory('zONFT')) as ZONFT__factory
+	const NFT = (await ethers.getContractFactory('ReflectedNFT')) as ZONFT__factory
 	const nft = await NFT.deploy(name, symbol)
 	await nft.deployed()
 	return nft
 }
 
-describe('zONFT', function () {
+describe('ReflectedNFT', function () {
 	it('deploys', async function () {
 		const nft = await loadFixture(deployReflectionNFT)
 		expect(nft).not.to.be.undefined

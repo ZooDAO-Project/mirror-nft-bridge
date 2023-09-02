@@ -99,8 +99,8 @@ export async function simpleBridgeScenario(txReturnType: TxReturnType = TxReturn
 
 	const reflectionAddr = await target.reflection(nft.address)
 
-	const zONFT = await ethers.getContractFactory('zONFT')
-	const reflection = zONFT.attach(reflectionAddr) as ZONFT
+	const ReflectedNFT = await ethers.getContractFactory('ReflectedNFT')
+	const reflection = ReflectedNFT.attach(reflectionAddr) as ZONFT
 
 	return {
 		source,
@@ -182,8 +182,8 @@ export async function bridgeBackScenario(txReturnType: TxReturnType = TxReturnTy
 
 	const reflectionAddr = await target.reflection(nft.address)
 
-	const zONFT = await ethers.getContractFactory('zONFT')
-	const reflection = zONFT.attach(reflectionAddr) as ZONFT
+	const ReflectedNFT = await ethers.getContractFactory('ReflectedNFT')
+	const reflection = ReflectedNFT.attach(reflectionAddr) as ZONFT
 
 	// Reversed flow
 	target = [source, (source = target)][0]
@@ -320,8 +320,8 @@ export async function simpleBridgeMultipleScenario(txReturnType: TxReturnType = 
 
 	const reflectionAddr = await target.reflection(nft.address)
 
-	const zONFT = await ethers.getContractFactory('zONFT')
-	const reflection = zONFT.attach(reflectionAddr) as ZONFT
+	const ReflectedNFT = await ethers.getContractFactory('ReflectedNFT')
+	const reflection = ReflectedNFT.attach(reflectionAddr) as ZONFT
 
 	return {
 		source,
@@ -375,8 +375,8 @@ export async function bridgeBackMultipleScenario(txReturnType: TxReturnType = Tx
 
 	const reflectionAddr = await target.reflection(nft.address)
 
-	const zONFT = await ethers.getContractFactory('zONFT')
-	const reflection = zONFT.attach(reflectionAddr) as ZONFT
+	const ReflectedNFT = await ethers.getContractFactory('ReflectedNFT')
+	const reflection = ReflectedNFT.attach(reflectionAddr) as ZONFT
 
 	// Reversed flow
 	target = [source, (source = target)][0]

@@ -2,9 +2,9 @@
 
 pragma solidity 0.8.18;
 
-import './zONFT.sol';
+import './ReflectedNFT.sol';
 
-abstract contract NftFactory {
+abstract contract ReflectionCreator {
 	// originalCollectionContract => reflectionCollectionContract
 	mapping(address => address) public reflection;
 
@@ -21,7 +21,7 @@ abstract contract NftFactory {
 		string memory name,
 		string memory symbol
 	) internal returns (address) {
-		zONFT nft = new zONFT(name, symbol);
+		ReflectedNFT nft = new ReflectedNFT(name, symbol);
 
 		reflection[originalCollectionAddr] = address(nft);
 		isReflection[address(nft)] = true;
