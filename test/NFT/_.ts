@@ -33,7 +33,7 @@ describe('NFT', function () {
 		await nft.mint(signers[1].address, 1)
 
 		const uri = await nft.tokenURI(1)
-		expect(uri).to.be.eq('https://ipfs.io/ipfs/QmTcsJujMBvRQL3gR6TeT4CBfUFayQScLYSKdViyCki7vR/1.gif')
+		expect(uri).to.be.eq('https://gateway.pinata.cloud/ipfs/QmQe92oxpt6uZLA6MYvv8pioxyDszonh7Gw9upz1nCA4T9/1.json')
 	})
 
 	it('tokens can be transferred', async function () {
