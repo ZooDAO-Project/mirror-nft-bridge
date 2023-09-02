@@ -22,6 +22,8 @@ contract Bridge is NftFactory, IBridge, IERC721Receiver, Ownable {
 
 	event NFTReturned(address originalCollectionAddress, uint256 tokenId, address owner);
 
+	event TrustedRemoteSet(uint256 targetNetworkId, address trustedRemote);
+
 	event MessageSend(address collection, string name, string symbol, uint256 tokenId, string tokenURI, address owner);
 
 	event MessageReceived(
@@ -32,8 +34,6 @@ contract Bridge is NftFactory, IBridge, IERC721Receiver, Ownable {
 		string tokenURI,
 		address owner
 	);
-
-	event TrustedRemoteSet(uint256 targetNetworkId, address trustedRemote);
 
 	function bridge(address collectionAddr, uint256 tokenId, uint256 targetNetworkId) public {
 		zONFT collection = zONFT(collectionAddr);
