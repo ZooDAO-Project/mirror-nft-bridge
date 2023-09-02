@@ -144,7 +144,7 @@ export async function getAdapterParamsAndFeesAmount(
 	sourceBridge: Bridge,
 	lzEndpoint: LZEndpointMock
 ) {
-	const RecommendedGas = '10000000'
+	const RecommendedGas = '2000000'
 	const adapterParams = ethers.utils.solidityPack(['uint16', 'uint256'], [1, RecommendedGas]) // default adapterParams example
 	const abi = new ethers.utils.AbiCoder()
 
