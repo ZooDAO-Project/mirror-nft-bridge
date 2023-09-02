@@ -9,7 +9,7 @@ import '@openzeppelin/contracts/access/Ownable.sol';
 contract zONFT is ERC721URIStorage, Ownable {
 	constructor(string memory _name, string memory _symbol) ERC721(_name, _symbol) {}
 
-	function mint(address to, uint tokenId, string calldata _tokenURI) public {
+	function mint(address to, uint tokenId, string calldata _tokenURI) public onlyOwner {
 		_mint(to, tokenId);
 		_setTokenURI(tokenId, _tokenURI);
 	}
