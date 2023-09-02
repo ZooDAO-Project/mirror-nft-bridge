@@ -8,20 +8,37 @@ import '@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol';
 import '@layerzerolabs/solidity-examples/contracts/token/onft/ONFT721Core.sol';
 import '@layerzerolabs/solidity-examples/contracts/lzApp/NonblockingLzApp.sol';
 
+/// @title NFT bridge named Mirror
+/// @author 0xslava
+/// @notice Mirror bridges NFTs to other supported chains
+/// @notice Bridge process named "creating reflection"
+/// @notice Copy of NFT collections are called "reflections"
+/// @notice Can reflect only eligible NFT collections
+/// @notice Can reflect NFT to any chain, where Mirror contracts exists and connnected
+/// @dev When collection bridged from source to target chain for the first time - deploys ReflectedNFT contract
+/// @dev If collection was already bridged to target chain before - uses existing ReflectedNFT contract
+/// @dev For creating ReflectedNFT contracts uses original collection's name and symbol
 contract Mirror is NonblockingLzApp, ReflectionCreator, IERC721Receiver {
+	/// @notice Limit for amount of tokens being bridged in single transaction
 	uint256 public reflectionAmountLimit = 10;
 
+	/// @dev Used in createReflection() and _reflect() functions to determine if collection address is original for that chain
 	mapping(address => bool) public isOriginalChainForCollection;
 
+	/// @notice Checks if collection eligible to bridge
 	mapping(address => bool) public isEligibleCollection;
 
 	/* EVENTS */
+	/// @dev Triggered on NFT being transfered from user to lock it on contract if collection is original
 	event NFTReceived(address operator, address from, uint256 tokenId, bytes data);
 
+	/// @dev Triggered in the end of the every bridge of token-reflection
 	event NFTBridged(address originalCollectionAddress, uint256[] tokenIds, string[] tokenURIs, address owner);
 
+	/// @dev Triggered when NFT unlocked from contract and returned to owner
 	event NFTReturned(address originalCollectionAddress, uint256[] tokenIds, address owner);
 
+	/// @dev Triggered at the start of every bridge process
 	event BridgeNFT(
 		address collection,
 		string name,
@@ -33,6 +50,7 @@ contract Mirror is NonblockingLzApp, ReflectionCreator, IERC721Receiver {
 
 	constructor(address _lzEndpoint) NonblockingLzApp(_lzEndpoint) {}
 
+	/// @notice Estimates fee needed to bridge signle token to target chain
 	function estimateSendFee(
 		address collection,
 		uint tokenId,
@@ -43,6 +61,7 @@ contract Mirror is NonblockingLzApp, ReflectionCreator, IERC721Receiver {
 		return estimateSendBatchFee(collection, _toSingletonArray(tokenId), targetNetworkId, useZro, adapterParams);
 	}
 
+	/// @notice Estimates fee needed to bridge batch of tokens to target chain
 	function estimateSendBatchFee(
 		address collectionAddr,
 		uint[] memory tokenIds,
@@ -67,6 +86,22 @@ contract Mirror is NonblockingLzApp, ReflectionCreator, IERC721Receiver {
 		return lzEndpoint.estimateFees(targetNetworkId, address(this), payload, useZro, adapterParams);
 	}
 
+	/// @notice Bridges NFT to target chain
+	/// @notice Locks original NFT on contract before bridge
+	/// @notice Burns reflection of NFT on bridge
+	/// @param collectionAddr A
+	/// @param tokenIds Array of tokenIds to bridge to target chain
+	/// @param targetNetworkId target network ID from LayerZero's ecosystem (different from chain ID)
+	/// @param _refundAddress Address to return excessive native tokens
+	/// @param _zroPaymentAddress Currently takes zero address, but left as parameter according to LayerZero`s guidelines
+	/// @param _adapterParams abi.encode(1, gasLimit) gasLimit for transaction on target chain
+	/// @dev _adapterParams`s gasLimit should be 2,200,000 for bridge of single token to a new chain (chain where is no ReflectedNFT contract)
+	/// @dev _adapterParams`s gasLimit should be 300,000 for bridge of signle token to already deployed ReflectedNFT contract
+	/// @dev _adapterParams`s gasLimit should be 300,000 for bridge of signle token to already deployed ReflectedNFT contract
+	/// @dev Original NFT collection address is used as unique identifier at all chains
+	/// @dev Original NFT collection is passed as parameter at every bridge process to be used as identifier
+	/// @dev Passes in message name and symbol of collection to deploy ReflectedNFT contract if needed
+	/// @dev Passes in message tokenURI and tokenId of bridged NFT top mint exact same NFT on target chain
 	function createReflection(
 		address collectionAddr,
 		uint256[] memory tokenIds,
@@ -120,6 +155,9 @@ contract Mirror is NonblockingLzApp, ReflectionCreator, IERC721Receiver {
 		emit BridgeNFT(originalCollectionAddress, name, symbol, tokenIds, tokenURIs, msg.sender);
 	}
 
+	/// @dev Function inherited from NonBlockingLzApp
+	/// @dev Called by lzReceive() that is triggered by LzEndpoint
+	/// @dev Calles _reflect() to finish bridge process
 	function _nonblockingLzReceive(uint16, bytes memory, uint64, bytes memory payload) internal virtual override {
 		(
 			address originalCollectionAddr,
@@ -133,6 +171,17 @@ contract Mirror is NonblockingLzApp, ReflectionCreator, IERC721Receiver {
 		_reflect(originalCollectionAddr, name, symbol, tokenIds, tokenURIs, _owner);
 	}
 
+	/// @notice Function finishing bridge process
+	/// @notice Deploys ReflectedNFT contract if collection was bridged to current chain for the first time
+	/// @notice Uses existing ReflectedNFT contract if collection was bridged to that chain before
+	/// @notice Mints NFT-reflection on ReflectedNFT contract
+	/// @notice Returns (unlocks) NFT to owner if current chain is original for collection
+	/// @param originalCollectionAddr Address of original collection on original chain as unique identifier
+	/// @param name name of original collection to mint ReflectedNFT if needed
+	/// @param symbol symbol of original collection to mint ReflectedNFT if needed
+	/// @param tokenIds Array of tokenIds of bridged NFTs to mint exact same tokens
+	/// @param tokenURIs Array of tokenURIs of bridged NFTs to mint exact same tokens
+	/// @param _owner Address to mint or return token to
 	function _reflect(
 		address originalCollectionAddr,
 		string memory name,
@@ -172,10 +221,17 @@ contract Mirror is NonblockingLzApp, ReflectionCreator, IERC721Receiver {
 		}
 	}
 
+	/// @notice Updated collection eligibility to given parameter
+	/// @param collection collection address
+	/// @param eligibility boolean for eligibilty
+	/// @dev only owner can call
 	function changeCollectionEligibility(address collection, bool eligibility) external onlyOwner {
 		isEligibleCollection[collection] = eligibility;
 	}
 
+	/// @notice Changes limit for bridging batch of tokens
+	/// @param newReflectionAmountLimit Amount of tokens that can be bridged in single transaction
+	/// @dev only owner can call
 	function changeReflectionAmountLimit(uint256 newReflectionAmountLimit) external onlyOwner {
 		reflectionAmountLimit = newReflectionAmountLimit;
 	}
@@ -199,6 +255,8 @@ contract Mirror is NonblockingLzApp, ReflectionCreator, IERC721Receiver {
 		return IERC721Receiver.onERC721Received.selector;
 	}
 
+	/// @dev Called in createReflection() to make array from signle element
+	/// @dev Using [element] drops "Invalid implicit conversion from uint256[1] memory to uint256[]"
 	function _toSingletonArray(uint element) internal pure returns (uint[] memory) {
 		uint[] memory array = new uint[](1);
 		array[0] = element;
