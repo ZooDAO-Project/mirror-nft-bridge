@@ -9,6 +9,7 @@ import {
 	deployNFTWithMint,
 	bridgeBackMultipleScenario,
 	simpleBridgeMultipleScenario,
+	getAdapterParamsAndFeesAmount,
 } from './_.fixtures'
 import { ethers } from 'hardhat'
 import { ContractTransaction } from 'ethers'
@@ -124,7 +125,51 @@ export const createReflection = function () {
 			.withArgs(nft.address, [tokenId], [await nft.tokenURI(tokenId)], owner.address)
 	})
 
-	it('should revert on repeating tokenIds', function () {
-		expect(false).to.be.true
+	it('should revert on repeating tokenIds', async function () {
+		const { source, nft, tokenId, targetNetworkId, owner } = await simpleBridgeScenario(TxReturnType.arrowFunction)
+
+		const { fees, adapterParams } = await getAdapterParamsAndFeesAmount(
+			nft,
+			[tokenId, tokenId],
+			targetNetworkId,
+			source,
+			false
+		)
+
+		const tx = source.createReflection(
+			nft.address,
+			[tokenId, tokenId],
+			targetNetworkId,
+			owner.address,
+			ethers.constants.AddressZero,
+			adapterParams,
+			{ value: fees[0] }
+		)
+
+		await expectToBeRevertedWith(tx, 'ERC721: transfer from incorrect owner')
+	})
+
+	it('should fail on trying to bridge already bridged NFT', async function () {
+		const { source, nft, tokenId, targetNetworkId, owner } = await simpleBridgeScenario()
+
+		const { fees, adapterParams } = await getAdapterParamsAndFeesAmount(
+			nft,
+			[tokenId],
+			targetNetworkId,
+			source,
+			false
+		)
+
+		const tx = source.createReflection(
+			nft.address,
+			[tokenId, tokenId],
+			targetNetworkId,
+			owner.address,
+			ethers.constants.AddressZero,
+			adapterParams,
+			{ value: fees[0] }
+		)
+
+		await expectToBeRevertedWith(tx, 'ERC721: transfer from incorrect owner')
 	})
 }

@@ -114,6 +114,8 @@ export async function simpleBridgeScenario(txReturnType: TxReturnType = TxReturn
 		targetNetworkId,
 		sourceLzEndpoint,
 		targetLzEndpoint,
+		fees,
+		adapterParams,
 	}
 }
 
