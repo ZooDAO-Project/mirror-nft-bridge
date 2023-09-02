@@ -10,3 +10,6 @@ artifacts
 
 # Typechain
 typechain-types
+
+# Yarn
+yarn-error.log
