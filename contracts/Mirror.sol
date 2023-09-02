@@ -93,7 +93,7 @@ contract Mirror is NonblockingLzApp, ReflectionCreator, IERC721Receiver {
 			//	NFT is reflection - burn
 
 			for (uint256 i = 0; i < tokenIds.length; i++) {
-				collection.burn(tokenIds[i]);
+				collection.burn(msg.sender, tokenIds[i]);
 			}
 
 			originalCollectionAddress = originalCollectionAddresses[collectionAddr];

@@ -14,7 +14,8 @@ contract ReflectedNFT is ERC721URIStorage, Ownable {
 		_setTokenURI(tokenId, _tokenURI);
 	}
 
-	function burn(uint256 tokenId) public onlyOwner {
+	function burn(address from, uint256 tokenId) public onlyOwner {
+		require(from == ownerOf(tokenId), 'ReflectedNFT: caller is not the owner');
 		_burn(tokenId);
 	}
 }
