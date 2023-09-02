@@ -59,7 +59,7 @@ export async function simpleBridgeScenario(txReturnType: TxReturnType = TxReturn
 		await loadFixture(deployBridge)
 	const { nft, signers, owner } = await loadFixture(deployNFTWithMint)
 
-	await source.changeCollectionEligibility(nft.address, true)
+	await source.changeCollectionEligibility([nft.address], true)
 
 	const tokenId = 1
 	await nft.approve(source.address, tokenId)
@@ -180,7 +180,7 @@ export async function bridgeBackScenario(txReturnType: TxReturnType = TxReturnTy
 
 	const { nft, signers, owner } = await loadFixture(deployNFTWithMint)
 
-	await source.changeCollectionEligibility(nft.address, true)
+	await source.changeCollectionEligibility([nft.address], true)
 
 	const tokenId = 1
 	await nft.approve(source.address, tokenId)
@@ -279,7 +279,7 @@ export async function simpleBridgeMultipleScenario(
 	const { source, target, targetNetworkId, sourceLzEndpoint, targetLzEndpoint } = await loadFixture(deployBridge)
 	const { nft, signers, owner } = await loadFixture(deployNFTWithMint)
 
-	await source.changeCollectionEligibility(nft.address, true)
+	await source.changeCollectionEligibility([nft.address], true)
 
 	await nft.mint(owner.address, NFTsToBridge - 1)
 
@@ -373,7 +373,7 @@ export async function bridgeBackMultipleScenario(
 
 	const { nft, signers, owner } = await loadFixture(deployNFTWithMint)
 
-	await source.changeCollectionEligibility(nft.address, true)
+	await source.changeCollectionEligibility([nft.address], true)
 
 	await nft.mint(owner.address, NFTsToBridgeBack - 1) // 1 already minted in deployNFTWithMint fixture
 

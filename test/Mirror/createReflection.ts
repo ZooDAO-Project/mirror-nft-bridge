@@ -79,7 +79,7 @@ export const createReflection = function () {
 			it(`doesn't transfer without approve`, async function () {
 				const { source, targetNetworkId } = await loadFixture(deployBridge)
 				const { nft, owner } = await loadFixture(deployNFTWithMint)
-				await source.changeCollectionEligibility(nft.address, true)
+				await source.changeCollectionEligibility([nft.address], true)
 
 				const tokenId = 1
 				const tx = source.createReflection(

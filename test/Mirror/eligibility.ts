@@ -3,6 +3,7 @@ import { deployBridge, deployNFTWithMint, getAdapterParamsAndFeesAmount } from '
 import { loadFixture } from '@nomicfoundation/hardhat-network-helpers'
 import { ethers } from 'hardhat'
 import { expectToBeRevertedWith } from '../_utils'
+import * as collections from '../../constants/collections.json'
 
 export const eligibility = async function () {
 	it('Reflects only eligible collections', async function () {
@@ -31,7 +32,7 @@ export const eligibility = async function () {
 
 		await expectToBeRevertedWith(tx, 'Mirror: collection is not eligible')
 
-		await source.changeCollectionEligibility(nft.address, true)
+		await source.changeCollectionEligibility([nft.address], true)
 
 		tx = source.createReflection(
 			nft.address,
@@ -44,5 +45,12 @@ export const eligibility = async function () {
 		)
 
 		expect(tx).not.to.be.reverted
+	})
+
+	it('Makes eligible lots of collections', async function () {
+		const { source, targetNetworkId } = await loadFixture(deployBridge)
+		// const { nft, owner, tokenId } = await loadFixture(deployNFTWithMint)
+
+		await source.changeCollectionEligibility((collections as any).default, true)
 	})
 }

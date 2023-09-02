@@ -231,11 +231,13 @@ contract Mirror is NonblockingLzApp, ReflectionCreator, FeeTaker, IERC721Receive
 	}
 
 	/// @notice Updated collection eligibility to given parameter
-	/// @param collection collection address
+	/// @param collections collection addresses
 	/// @param eligibility boolean for eligibilty
 	/// @dev only owner can call
-	function changeCollectionEligibility(address collection, bool eligibility) external onlyOwner {
-		isEligibleCollection[collection] = eligibility;
+	function changeCollectionEligibility(address[] calldata collections, bool eligibility) external onlyOwner {
+		for (uint i = 0; i < collections.length; i++) {
+			isEligibleCollection[collections[i]] = eligibility;
+		}
 	}
 
 	/// @notice Changes limit for bridging batch of tokens
