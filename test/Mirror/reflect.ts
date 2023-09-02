@@ -1,7 +1,14 @@
 import { expect } from 'chai'
 import { anyValue } from '@nomicfoundation/hardhat-chai-matchers/withArgs'
 import { NFTReflectionDeployedEvent } from '../../typechain-types/contracts/Mirror'
-import { bridgeBackScenario, TxReturnType, simpleBridgeScenario, getAdapterParamsAndFeesAmount } from './_.fixtures'
+import {
+	bridgeBackScenario,
+	TxReturnType,
+	simpleBridgeScenario,
+	getAdapterParamsAndFeesAmount,
+	bridgeBackMultipleScenario,
+	simpleBridgeMultipleScenario,
+} from './_.fixtures'
 import { ethers } from 'hardhat'
 
 export const reflect = function () {
@@ -14,10 +21,20 @@ export const reflect = function () {
 			expect(await nft.ownerOf(tokenId)).to.be.eq(owner.address)
 		})
 
+		it('returns multiple locked NFT to owner', async function () {
+			const { target, nft, tx, owner, tokenId } = await bridgeBackMultipleScenario(TxReturnType.arrowFunction)
+
+			await expect(tx).to.changeTokenBalances(nft, [target, owner], [-3, 3])
+
+			expect(await nft.ownerOf(tokenId)).to.be.eq(owner.address)
+			expect(await nft.ownerOf(tokenId + 1)).to.be.eq(owner.address)
+			expect(await nft.ownerOf(tokenId + 2)).to.be.eq(owner.address)
+		})
+
 		it('emits NFTReturned event', async function () {
 			const { target, nft, tx, tokenId, owner } = await bridgeBackScenario()
 
-			await expect(tx).to.emit(target, 'NFTReturned').withArgs(nft.address, tokenId, owner.address)
+			await expect(tx).to.emit(target, 'NFTReturned').withArgs(nft.address, [tokenId], owner.address)
 		})
 	})
 
@@ -52,7 +69,7 @@ export const reflect = function () {
 
 		describe('else reflection contract exists', function () {
 			it(`doesn't deploy new contract`, async function () {
-				const { source, nft, owner, targetNetworkId, sourceLzEndpoint } = await simpleBridgeScenario()
+				const { source, nft, owner, targetNetworkId } = await simpleBridgeScenario()
 
 				await nft.mint(owner.address, 1)
 				const tokenId = 2
@@ -60,16 +77,15 @@ export const reflect = function () {
 
 				const { fees, adapterParams } = await getAdapterParamsAndFeesAmount(
 					nft,
-					tokenId,
-					owner,
+					[tokenId],
 					targetNetworkId,
 					source,
-					sourceLzEndpoint
+					true
 				)
 
 				const tx = await source.createReflection(
 					nft.address,
-					tokenId,
+					[tokenId],
 					targetNetworkId,
 					owner.address,
 					ethers.constants.AddressZero,
@@ -95,16 +111,15 @@ export const reflect = function () {
 
 				const { fees, adapterParams } = await getAdapterParamsAndFeesAmount(
 					nft,
-					tokenId,
-					owner,
+					[tokenId],
 					targetNetworkId,
 					source,
-					sourceLzEndpoint
+					true
 				)
 
-				const tx = await source.createReflection(
+				await source.createReflection(
 					nft.address,
-					tokenId,
+					[tokenId],
 					targetNetworkId,
 					owner.address,
 					ethers.constants.AddressZero,
@@ -122,6 +137,14 @@ export const reflect = function () {
 			expect(await reflection.balanceOf(owner.address)).to.be.eq('1')
 		})
 
+		it('mints multiple token with correct tokenId to owner', async function () {
+			const { owner, reflection, tokenId } = await simpleBridgeMultipleScenario()
+
+			expect(await reflection.ownerOf(tokenId)).to.be.eq(owner.address)
+			expect(await reflection.ownerOf(tokenId + 1)).to.be.eq(owner.address)
+			expect(await reflection.ownerOf(tokenId + 2)).to.be.eq(owner.address)
+		})
+
 		it('sets correct tokenURI', async function () {
 			const { nft, tokenId, reflection } = await simpleBridgeScenario()
 
@@ -131,20 +154,33 @@ export const reflect = function () {
 			expect(reflectionTokenURI).to.be.eq(originalTokenURI)
 		})
 
+		it('mints multiple token with correct tokenId to owner', async function () {
+			const { reflection, tokenId, nft } = await simpleBridgeMultipleScenario()
+
+			expect(await nft.tokenURI(tokenId)).to.be.eq(await reflection.tokenURI(tokenId))
+			expect(await nft.tokenURI(tokenId + 1)).to.be.eq(await reflection.tokenURI(tokenId + 1))
+			expect(await nft.tokenURI(tokenId + 2)).to.be.eq(await reflection.tokenURI(tokenId + 2))
+		})
+
 		it('emits NFTBridged event', async function () {
 			const { tx, target, nft, owner, tokenId } = await simpleBridgeScenario()
 
 			await expect(tx)
 				.to.emit(target, 'NFTBridged')
-				.withArgs(nft.address, tokenId, await nft.tokenURI(tokenId), owner.address)
+				.withArgs(nft.address, [tokenId], [await nft.tokenURI(tokenId)], owner.address)
 		})
-	})
 
-	it(`emits MessageReceived event / receives message`, async function () {
-		const { tx, target, nft, owner, tokenId } = await simpleBridgeScenario()
+		it('emits one NFTBridged event for multiple tokens', async function () {
+			const { tx, target, nft, owner, tokenId } = await simpleBridgeMultipleScenario()
 
-		await expect(tx)
-			.to.emit(target, 'NFTBridged')
-			.withArgs(nft.address, tokenId, await nft.tokenURI(tokenId), owner.address)
+			await expect(tx)
+				.to.emit(target, 'NFTBridged')
+				.withArgs(
+					nft.address,
+					[tokenId, tokenId + 1, tokenId + 2],
+					[await nft.tokenURI(tokenId), await nft.tokenURI(tokenId + 1), await nft.tokenURI(tokenId + 2)],
+					owner.address
+				)
+		})
 	})
 }

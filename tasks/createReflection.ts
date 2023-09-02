@@ -61,7 +61,7 @@ export async function createReflection(taskArgs: any, hre: HardhatRuntimeEnviron
 	try {
 		const tx = await source.createReflection(
 			taskArgs.collection, // 'from' address to send tokens
-			taskArgs.tokenId,
+			[taskArgs.tokenId],
 			remoteChainId, // remote LayerZero chainId
 			owner.address, // 'to' address to send tokens
 			hre.ethers.constants.AddressZero, // tokenId to send

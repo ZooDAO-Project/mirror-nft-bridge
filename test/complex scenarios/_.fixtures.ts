@@ -1,8 +1,8 @@
 import { ethers } from 'hardhat'
-import { Bridge__factory, LZEndpointMock__factory } from '../../typechain-types'
+import { LZEndpointMock__factory, Mirror__factory } from '../../typechain-types'
 
 export async function deployMultipleBridges() {
-	const Mirror = (await ethers.getContractFactory('Mirror')) as Bridge__factory
+	const Mirror = (await ethers.getContractFactory('Mirror')) as Mirror__factory
 	const LzEndpointMock = (await ethers.getContractFactory('LZEndpointMock')) as LZEndpointMock__factory
 
 	const ethNetworkId = 101 // LZ network ID - ethereum

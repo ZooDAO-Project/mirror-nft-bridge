@@ -4,6 +4,7 @@ import { createReflection } from './createReflection'
 import { reflect } from './reflect'
 import { deployBridge } from './_.fixtures'
 import { eligibility } from './eligibility'
+import { estimateSendFee } from './estimateSendFee'
 
 describe('Mirror', function () {
 	it('deploys', async function () {
@@ -19,4 +20,5 @@ describe('Mirror', function () {
 	describe('createReflection()', createReflection)
 	describe('reflect()', reflect)
 	describe('eligibility', eligibility)
+	describe('estimateSendFee()', estimateSendFee)
 })

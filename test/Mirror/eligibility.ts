@@ -6,23 +6,22 @@ import { expectToBeRevertedWith } from '../_utils'
 
 export const eligibility = async function () {
 	it('Reflects only eligible collections', async function () {
-		const { source, target, sourceLzEndpoint, targetNetworkId } = await loadFixture(deployBridge)
+		const { source, targetNetworkId } = await loadFixture(deployBridge)
 		const { nft, owner, tokenId } = await loadFixture(deployNFTWithMint)
 
 		await nft.approve(source.address, tokenId)
 
 		const { fees, adapterParams } = await getAdapterParamsAndFeesAmount(
 			nft,
-			tokenId,
-			owner,
+			[tokenId],
 			targetNetworkId,
 			source,
-			sourceLzEndpoint
+			false
 		)
 
 		let tx = source.createReflection(
 			nft.address,
-			tokenId,
+			[tokenId],
 			targetNetworkId,
 			owner.address,
 			ethers.constants.AddressZero,
@@ -36,7 +35,7 @@ export const eligibility = async function () {
 
 		tx = source.createReflection(
 			nft.address,
-			tokenId,
+			[tokenId],
 			targetNetworkId,
 			owner.address,
 			ethers.constants.AddressZero,

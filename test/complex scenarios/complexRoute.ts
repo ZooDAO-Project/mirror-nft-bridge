@@ -14,17 +14,16 @@ export const complexRoute = async function () {
 
 	const { fees, adapterParams } = await getAdapterParamsAndFeesAmount(
 		nft,
-		tokenId,
-		owner,
+		[tokenId],
 		networkIds.moonNetworkId,
 		ethBridge,
-		lzEndpoints.ethLzEndpoint
+		false
 	)
 
 	const zeroAddress = ethers.constants.AddressZero
 	await ethBridge.createReflection(
 		nft.address,
-		tokenId,
+		[tokenId],
 		networkIds.moonNetworkId,
 		owner.address,
 		zeroAddress,
@@ -43,7 +42,7 @@ export const complexRoute = async function () {
 
 	await moonBridge.createReflection(
 		moonReflectionNftAddr,
-		tokenId,
+		[tokenId],
 		networkIds.arbNetworkId,
 		owner.address,
 		zeroAddress,
@@ -62,7 +61,7 @@ export const complexRoute = async function () {
 
 	await arbBridge.createReflection(
 		arbReflectionNftAddr,
-		tokenId,
+		[tokenId],
 		networkIds.ethNetworkId,
 		owner.address,
 		zeroAddress,

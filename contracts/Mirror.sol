@@ -20,38 +20,58 @@ contract Mirror is NonblockingLzApp, NftFactory, IERC721Receiver {
 	/* EVENTS */
 	event NFTReceived(address operator, address from, uint256 tokenId, bytes data);
 
-	event NFTBridged(address originalCollectionAddress, uint256 tokenId, string tokenURI, address owner);
+	event NFTBridged(address originalCollectionAddress, uint256[] tokenIds, string[] tokenURIs, address owner);
 
-	event NFTReturned(address originalCollectionAddress, uint256 tokenId, address owner);
+	event NFTReturned(address originalCollectionAddress, uint256[] tokenIds, address owner);
 
-	event BridgeNFT(address collection, string name, string symbol, uint256 tokenId, string tokenURI, address owner);
+	event BridgeNFT(
+		address collection,
+		string name,
+		string symbol,
+		uint256[] tokenId,
+		string[] tokenURI,
+		address owner
+	);
 
 	constructor(address _lzEndpoint) NonblockingLzApp(_lzEndpoint) {}
 
 	function estimateSendFee(
-		uint16 _dstChainId,
-		bytes memory _toAddress,
-		uint _tokenId,
-		bool _useZro,
-		bytes memory _adapterParams
+		address collection,
+		uint tokenId,
+		uint16 targetNetworkId,
+		bool useZro,
+		bytes memory adapterParams
 	) public view returns (uint nativeFee, uint zroFee) {
-		return estimateSendBatchFee(_dstChainId, _toAddress, _toSingletonArray(_tokenId), _useZro, _adapterParams);
+		return estimateSendBatchFee(collection, _toSingletonArray(tokenId), targetNetworkId, useZro, adapterParams);
 	}
 
 	function estimateSendBatchFee(
-		uint16 _dstChainId,
-		bytes memory _toAddress,
-		uint[] memory _tokenIds,
-		bool _useZro,
-		bytes memory _adapterParams
+		address collectionAddr,
+		uint[] memory tokenIds,
+		uint16 targetNetworkId,
+		bool useZro,
+		bytes memory adapterParams
 	) public view returns (uint nativeFee, uint zroFee) {
-		bytes memory payload = abi.encode(_toAddress, _tokenIds);
-		return lzEndpoint.estimateFees(_dstChainId, address(this), payload, _useZro, _adapterParams);
+		zONFT collection = zONFT(collectionAddr);
+
+		string memory name = collection.name();
+		string memory symbol = collection.symbol();
+
+		string[] memory tokenURIs = new string[](tokenIds.length);
+
+		for (uint256 i = 0; i < tokenIds.length; i++) {
+			string memory tokenURI = collection.tokenURI(tokenIds[i]);
+			tokenURIs[i] = tokenURI;
+		}
+
+		bytes memory payload = abi.encode(collection, name, symbol, tokenIds, tokenURIs, msg.sender);
+
+		return lzEndpoint.estimateFees(targetNetworkId, address(this), payload, useZro, adapterParams);
 	}
 
 	function createReflection(
 		address collectionAddr,
-		uint256 tokenId,
+		uint256[] memory tokenIds,
 		uint16 targetNetworkId,
 		address payable _refundAddress,
 		address _zroPaymentAddress,
@@ -63,29 +83,41 @@ contract Mirror is NonblockingLzApp, NftFactory, IERC721Receiver {
 
 		string memory name = collection.name();
 		string memory symbol = collection.symbol();
-		string memory tokenURI = collection.tokenURI(tokenId);
+
+		string[] memory tokenURIs = new string[](tokenIds.length);
+
+		for (uint256 i = 0; i < tokenIds.length; i++) {
+			string memory tokenURI = collection.tokenURI(tokenIds[i]);
+			tokenURIs[i] = tokenURI;
+		}
 
 		address originalCollectionAddress;
 
 		if (isReflection[collectionAddr]) {
 			//	NFT is reflection - burn
-			collection.burn(tokenId);
+
+			for (uint256 i = 0; i < tokenIds.length; i++) {
+				collection.burn(tokenIds[i]);
+			}
+
 			originalCollectionAddress = originalCollectionAddresses[collectionAddr];
 		} else {
 			// Is original contract
 			// Lock NFT on contract
-			collection.safeTransferFrom(msg.sender, address(this), tokenId);
+
+			for (uint256 i = 0; i < tokenIds.length; i++) {
+				collection.safeTransferFrom(msg.sender, address(this), tokenIds[i]);
+			}
+
 			isOriginalChainForCollection[collectionAddr] = true;
 			originalCollectionAddress = collectionAddr;
 		}
 
-		bytes memory _payload = abi.encode(originalCollectionAddress, name, symbol, tokenId, tokenURI, msg.sender);
-
-		// _checkGasLimit(targetNetworkId, FUNCTION_TYPE_SEND, _adapterParams, 1500000);
+		bytes memory _payload = abi.encode(originalCollectionAddress, name, symbol, tokenIds, tokenURIs, msg.sender);
 
 		_lzSend(targetNetworkId, _payload, _refundAddress, _zroPaymentAddress, _adapterParams, msg.value);
 
-		emit BridgeNFT(originalCollectionAddress, name, symbol, tokenId, tokenURI, msg.sender);
+		emit BridgeNFT(originalCollectionAddress, name, symbol, tokenIds, tokenURIs, msg.sender);
 	}
 
 	function _nonblockingLzReceive(uint16, bytes memory, uint64, bytes memory _payload) internal virtual override {
@@ -93,29 +125,32 @@ contract Mirror is NonblockingLzApp, NftFactory, IERC721Receiver {
 			address originalCollectionAddr,
 			string memory name,
 			string memory symbol,
-			uint256 tokenId,
-			string memory tokenURI,
+			uint256[] memory tokenIds,
+			string[] memory tokenURIs,
 			address _owner
-		) = abi.decode(_payload, (address, string, string, uint256, string, address));
+		) = abi.decode(_payload, (address, string, string, uint256[], string[], address));
 
-		_reflect(originalCollectionAddr, name, symbol, tokenId, tokenURI, _owner);
+		_reflect(originalCollectionAddr, name, symbol, tokenIds, tokenURIs, _owner);
 	}
 
 	function _reflect(
 		address originalCollectionAddr,
 		string memory name,
 		string memory symbol,
-		uint256 tokenId,
-		string memory tokenURI,
+		uint256[] memory tokenIds,
+		string[] memory tokenURIs,
 		address _owner
 	) internal {
 		bool isOriginalChain = isOriginalChainForCollection[originalCollectionAddr];
 
 		if (isOriginalChain) {
 			// Unlock NFT and return to owner
-			zONFT(originalCollectionAddr).safeTransferFrom(address(this), _owner, tokenId);
 
-			emit NFTReturned(originalCollectionAddr, tokenId, _owner);
+			for (uint256 i = 0; i < tokenIds.length; i++) {
+				zONFT(originalCollectionAddr).safeTransferFrom(address(this), _owner, tokenIds[i]);
+			}
+
+			emit NFTReturned(originalCollectionAddr, tokenIds, _owner);
 		} else {
 			bool isThereReflectionContract = reflection[originalCollectionAddr] != address(0);
 
@@ -129,9 +164,11 @@ contract Mirror is NonblockingLzApp, NftFactory, IERC721Receiver {
 
 			isEligibleCollection[collectionAddr] = true;
 
-			zONFT(collectionAddr).mint(_owner, tokenId, tokenURI);
+			for (uint256 i = 0; i < tokenIds.length; i++) {
+				zONFT(collectionAddr).mint(_owner, tokenIds[i], tokenURIs[i]);
+			}
 
-			emit NFTBridged(originalCollectionAddr, tokenId, tokenURI, _owner);
+			emit NFTBridged(originalCollectionAddr, tokenIds, tokenURIs, _owner);
 		}
 
 		// emit MessageReceived(originalCollectionAddr, name, symbol, tokenId, tokenURI, _owner);

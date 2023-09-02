@@ -1,15 +1,38 @@
 import { loadFixture } from '@nomicfoundation/hardhat-network-helpers'
 import { expect } from 'chai'
 import { expectToBeRevertedWith } from '../_utils'
-import { bridgeBackScenario, TxReturnType, simpleBridgeScenario, deployBridge, deployNFTWithMint } from './_.fixtures'
+import {
+	bridgeBackScenario,
+	TxReturnType,
+	simpleBridgeScenario,
+	deployBridge,
+	deployNFTWithMint,
+	bridgeBackMultipleScenario,
+	simpleBridgeMultipleScenario,
+} from './_.fixtures'
 import { ethers } from 'hardhat'
+import { ContractTransaction } from 'ethers'
 
 export const createReflection = function () {
 	describe('if collection is reflection', function () {
-		it('burns reflection NFT', async function () {
+		it('burns  NFTs reflection', async function () {
 			const { reflection, tx, owner } = await bridgeBackScenario(TxReturnType.arrowFunction)
 
 			await expect(tx).to.changeTokenBalance(reflection, owner, -1)
+		})
+
+		it('burns  NFT reflections', async function () {
+			const { reflection, tx, owner, tokenId } = await bridgeBackMultipleScenario(TxReturnType.arrowFunction)
+
+			await expect(tx).to.changeTokenBalance(reflection, owner, -3)
+
+			const ownerOfBurned = async (tokenId: number) =>
+				(await reflection.ownerOf(tokenId)) as any as ContractTransaction
+			const error = 'ERC721: invalid token ID'
+
+			await expectToBeRevertedWith(ownerOfBurned(tokenId), error)
+			await expectToBeRevertedWith(ownerOfBurned(tokenId + 1), error)
+			await expectToBeRevertedWith(ownerOfBurned(tokenId + 2), error)
 		})
 
 		it('sends and receives message with original collection address, not reflection address', async function () {
@@ -21,12 +44,12 @@ export const createReflection = function () {
 					nft.address,
 					await reflection.name(),
 					await reflection.symbol(),
-					tokenId,
-					await nft.tokenURI(tokenId),
+					[tokenId],
+					[await nft.tokenURI(tokenId)],
 					owner.address
 				)
 
-			await expect(tx).to.emit(target, 'NFTReturned').withArgs(nft.address, tokenId, owner.address)
+			await expect(tx).to.emit(target, 'NFTReturned').withArgs(nft.address, [tokenId], owner.address)
 		})
 	})
 
@@ -40,6 +63,18 @@ export const createReflection = function () {
 				expect(await nft.ownerOf(tokenId)).to.be.eq(source.address)
 			})
 
+			it(`makes transfer from msg.sender to contract address for multiple NFTs`, async function () {
+				const { source, nft, tx, owner, tokenId } = await simpleBridgeMultipleScenario(
+					TxReturnType.arrowFunction
+				)
+
+				await expect(tx).to.changeTokenBalances(nft, [owner, source], [-3, 3])
+
+				expect(await nft.ownerOf(tokenId)).to.be.eq(source.address)
+				expect(await nft.ownerOf(tokenId + 1)).to.be.eq(source.address)
+				expect(await nft.ownerOf(tokenId + 2)).to.be.eq(source.address)
+			})
+
 			it(`doesn't transfer without approve`, async function () {
 				const { source, targetNetworkId } = await loadFixture(deployBridge)
 				const { nft, owner } = await loadFixture(deployNFTWithMint)
@@ -48,7 +83,7 @@ export const createReflection = function () {
 				const tokenId = 1
 				const tx = source.createReflection(
 					nft.address,
-					tokenId,
+					[tokenId],
 					targetNetworkId,
 					owner.address,
 					ethers.constants.AddressZero,
@@ -75,8 +110,8 @@ export const createReflection = function () {
 				nft.address,
 				await nft.name(),
 				await nft.symbol(),
-				tokenId,
-				await nft.tokenURI(tokenId),
+				[tokenId],
+				[await nft.tokenURI(tokenId)],
 				owner.address
 			)
 	})
@@ -86,6 +121,10 @@ export const createReflection = function () {
 
 		await expect(tx)
 			.to.emit(target, 'NFTBridged')
-			.withArgs(nft.address, tokenId, await nft.tokenURI(tokenId), owner.address)
+			.withArgs(nft.address, [tokenId], [await nft.tokenURI(tokenId)], owner.address)
+	})
+
+	it('should revert on repeating tokenIds', function () {
+		expect(false).to.be.true
 	})
 }

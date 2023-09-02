@@ -3,7 +3,6 @@ import { deployMultipleBridges } from './_.fixtures'
 import { deployNFTWithMint, getAdapterParamsAndFeesAmount } from '../Mirror/_.fixtures'
 import { loadFixture } from '@nomicfoundation/hardhat-network-helpers'
 import hardhat, { ethers } from 'hardhat'
-import { NFT } from '../../typechain-types'
 
 export const cheaperRepeatedBridges = async function () {
 	hardhat.tracer.enabled = false
@@ -15,11 +14,10 @@ export const cheaperRepeatedBridges = async function () {
 
 	const { fees, adapterParams } = await getAdapterParamsAndFeesAmount(
 		nft,
-		tokenId,
-		owner,
+		[tokenId],
 		networkIds.moonNetworkId,
 		ethBridge,
-		lzEndpoints.ethLzEndpoint
+		false
 	)
 
 	const zeroAddress = ethers.constants.AddressZero
@@ -28,7 +26,7 @@ export const cheaperRepeatedBridges = async function () {
 
 	const tx = await ethBridge.createReflection(
 		nft.address,
-		tokenId,
+		[tokenId],
 		networkIds.moonNetworkId,
 		owner.address,
 		zeroAddress,
@@ -37,7 +35,7 @@ export const cheaperRepeatedBridges = async function () {
 			value: fees[0],
 		}
 	)
-	0.022006028
+
 	expect(tx).not.to.be.reverted
 
 	await nft.mint(signers[6].address, 1)
@@ -47,17 +45,11 @@ export const cheaperRepeatedBridges = async function () {
 
 	const gas = '350000'
 	const newAdapterParams = ethers.utils.solidityPack(['uint16', 'uint256'], [1, gas])
-	const abi = new ethers.utils.AbiCoder()
 
-	const payload = abi.encode(
-		['address', 'string', 'string', 'uint256', 'string', 'address'],
-		[nft.address, await nft.name(), await nft.symbol(), tokenId, await nft.tokenURI(tokenId), owner.address]
-	)
-
-	const lesserFees = await lzEndpoints.ethLzEndpoint.estimateFees(
+	const lesserFees = await ethBridge.estimateSendBatchFee(
+		nft.address,
+		[tokenId + 1],
 		networkIds.moonNetworkId,
-		ethBridge.address,
-		payload,
 		false,
 		newAdapterParams
 	)
@@ -66,7 +58,7 @@ export const cheaperRepeatedBridges = async function () {
 		.connect(signers[6])
 		.createReflection(
 			nft.address,
-			tokenId + 1,
+			[tokenId + 1],
 			networkIds.moonNetworkId,
 			owner.address,
 			zeroAddress,
