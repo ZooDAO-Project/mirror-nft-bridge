@@ -55,7 +55,8 @@ export async function deployNFTWithMint() {
 // from ethereum (source) to moonbeam (target)
 // Deploys new reflection contract on target chain
 export async function simpleBridgeScenario(txReturnType: TxReturnType = TxReturnType.awaited) {
-	const { source, target, targetNetworkId, sourceLzEndpoint, targetLzEndpoint } = await loadFixture(deployBridge)
+	const { source, target, targetNetworkId, sourceLzEndpoint, targetLzEndpoint, feeReceiver, feeAmount } =
+		await loadFixture(deployBridge)
 	const { nft, signers, owner } = await loadFixture(deployNFTWithMint)
 
 	await source.changeCollectionEligibility(nft.address, true)
@@ -128,6 +129,8 @@ export async function simpleBridgeScenario(txReturnType: TxReturnType = TxReturn
 		targetLzEndpoint,
 		fees,
 		adapterParams,
+		feeReceiver,
+		feeAmount,
 	}
 }
 
