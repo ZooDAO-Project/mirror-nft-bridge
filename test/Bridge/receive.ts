@@ -1,6 +1,6 @@
 import { expect } from 'chai'
 import { anyValue } from '@nomicfoundation/hardhat-chai-matchers/withArgs'
-import { NFTCopyDeployedEvent } from '../../typechain-types/contracts/Bridge'
+import { NFTCopyDeployedEvent } from '../../typechain-types/contracts/Mirror'
 import { bridgeBackScenario, TxReturnType, simpleBridgeScenario, getAdapterParamsAndFeesAmount } from './_.fixtures'
 import { ethers } from 'hardhat'
 import { ContractTransaction } from 'ethers'

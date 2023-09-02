@@ -4,7 +4,7 @@ import { bridge } from './bridge'
 import { receive } from './receive'
 import { deployBridge } from './_.fixtures'
 
-describe('Bridge', function () {
+describe('Mirror', function () {
 	it('deploys', async function () {
 		const { source } = await loadFixture(deployBridge)
 		expect(source).not.to.be.undefined

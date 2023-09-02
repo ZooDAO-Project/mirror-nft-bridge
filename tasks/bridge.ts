@@ -1,7 +1,7 @@
 import CHAIN_ID from '../constants/chainIds.json'
 import LzEndpoints from '../constants/LzEndpoints.json'
 import { HardhatRuntimeEnvironment } from 'hardhat/types'
-import { Bridge, LZEndpointMock, NFT, ONFT721 } from '../typechain-types'
+import { Mirror, LZEndpointMock, NFT, ONFT721 } from '../typechain-types'
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
 import { ethers } from 'ethers'
 import { log } from 'console'
@@ -19,7 +19,7 @@ export async function bridge(taskArgs: any, hre: HardhatRuntimeEnvironment) {
 	const targetNetwork = taskArgs.targetNetwork as keyof typeof CHAIN_ID
 	const remoteChainId: any = CHAIN_ID[targetNetwork]
 
-	const Bridge = await hre.ethers.getContractFactory('Bridge')
+	const Mirror = await hre.ethers.getContractFactory('Mirror')
 
 	const lzEndpointAddr = LzEndpoints[hre.network.name as keyof typeof LzEndpoints]
 	const lzEndpoint = (await hre.ethers.getContractAt('ILayerZeroEndpoint', lzEndpointAddr)) as LZEndpointMock
@@ -31,9 +31,9 @@ export async function bridge(taskArgs: any, hre: HardhatRuntimeEnvironment) {
 	const localBridgeAddress = bridgeAddresses[mode][network]
 	const remoteBridgeAddress = bridgeAddresses[mode][targetNetwork as SupportedNetwork]
 
-	const source = Bridge.attach(localBridgeAddress) as Bridge
+	const source = Mirror.attach(localBridgeAddress) as Mirror
 
-	const target = Bridge.attach(remoteBridgeAddress) as Bridge
+	const target = Mirror.attach(remoteBridgeAddress) as Mirror
 
 	const nft = NFT.attach(taskArgs.collection) as NFT
 
@@ -88,7 +88,7 @@ export async function getAdapterParamsAndFeesAmount(
 	tokenId: number,
 	owner: SignerWithAddress,
 	targetNetworkId: number,
-	sourceBridge: Bridge,
+	sourceBridge: Mirror,
 	lzEndpoint: LZEndpointMock,
 	isCopyDeployed: boolean
 ) {

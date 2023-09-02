@@ -1,7 +1,7 @@
 import { loadFixture } from '@nomicfoundation/hardhat-network-helpers'
 import { ethers } from 'hardhat'
 import {
-	Bridge,
+	Mirror,
 	Bridge__factory,
 	LZEndpointMock,
 	LZEndpointMock__factory,
@@ -13,7 +13,7 @@ import { deployNFT } from '../NFT/_'
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
 
 export async function deployBridge() {
-	const Bridge = (await ethers.getContractFactory('Bridge')) as Bridge__factory
+	const Mirror = (await ethers.getContractFactory('Mirror')) as Bridge__factory
 	const LzEndpointMock = (await ethers.getContractFactory('LZEndpointMock')) as LZEndpointMock__factory
 
 	const sourceNetworkId = 101 // LZ network ID - ethereum
@@ -22,8 +22,8 @@ export async function deployBridge() {
 	const sourceLzEndpoint = await LzEndpointMock.deploy(sourceNetworkId)
 	const targetLzEndpoint = await LzEndpointMock.deploy(targetNetworkId)
 
-	const source = await Bridge.deploy(sourceLzEndpoint.address)
-	const target = await Bridge.deploy(targetLzEndpoint.address)
+	const source = await Mirror.deploy(sourceLzEndpoint.address)
+	const target = await Mirror.deploy(targetLzEndpoint.address)
 
 	await source.deployed()
 	await target.deployed()
@@ -142,7 +142,7 @@ export async function getAdapterParamsAndFeesAmount(
 	tokenId: number,
 	owner: SignerWithAddress,
 	targetNetworkId: number,
-	sourceBridge: Bridge,
+	sourceBridge: Mirror,
 	lzEndpoint: LZEndpointMock
 ) {
 	const RecommendedGas = '2000000'

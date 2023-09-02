@@ -8,10 +8,10 @@ export async function setTrustedRemote(taskArgs: any, hre: HardhatRuntimeEnviron
 	const targetNetwork = taskArgs.targetNetwork as keyof typeof CHAIN_ID
 	const remoteChainId: any = CHAIN_ID[targetNetwork]
 
-	const Bridge = await ethers.getContractFactory('Bridge')
+	const Mirror = await ethers.getContractFactory('Mirror')
 
-	const source = Bridge.attach(taskArgs.localContract)
-	const target = Bridge.attach(taskArgs.remoteContract)
+	const source = Mirror.attach(taskArgs.localContract)
+	const target = Mirror.attach(taskArgs.remoteContract)
 
 	// concat remote and local address
 	const remoteAndLocal = hre.ethers.utils.solidityPack(['address', 'address'], [target.address, source.address])

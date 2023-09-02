@@ -18,19 +18,19 @@ async function main() {
 	await hre.run('compile')
 
 	// We get the contract to deploy
-	const Bridge = await ethers.getContractFactory('Bridge')
+	const Mirror = await ethers.getContractFactory('Mirror')
 	const lzEndpoint: string = LzEndpoints[hre.network.name as keyof typeof LzEndpoints]
 	log('LzEndpoint', lzEndpoint)
 
-	const bridge = await Bridge.deploy(lzEndpoint)
+	const bridge = await Mirror.deploy(lzEndpoint)
 
 	await bridge.deployed()
 
-	console.log('Bridge deployed to:', bridge.address)
+	console.log('Mirror deployed to:', bridge.address)
 
 	// const nft = { address: '0xcf374dbe799523b0287256722e2565f69bd6a1c2' }
 
-	await verifyContract(bridge.address, [lzEndpoint], 'contracts/Bridge.sol:Bridge')
+	await verifyContract(bridge.address, [lzEndpoint], 'contracts/Mirror.sol:Mirror')
 }
 
 // We recommend this pattern to be able to use async/await everywhere

@@ -1,6 +1,6 @@
 import { loadFixture } from '@nomicfoundation/hardhat-network-helpers'
 import { expect } from 'chai'
-import { simpleBridgeScenario } from '../Bridge/_.fixtures'
+import { simpleBridgeScenario } from '../Mirror/_.fixtures'
 import { expectToBeRevertedWith } from '../_utils'
 import { deployCopyNFT } from './_.test'
 import { ethers } from 'hardhat'

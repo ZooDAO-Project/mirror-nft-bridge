@@ -1,4 +1,4 @@
-# NFT bridge with LayerZero
+# Mirror NFT Bridge
 
 This repository is about developing contracts to make easier bridging NFTs from ethereum network to moonbeam for ZooDAO Dapp users and devs
 

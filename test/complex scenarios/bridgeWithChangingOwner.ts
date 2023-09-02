@@ -1,6 +1,6 @@
 import { expect } from 'chai'
 import { deployMultipleBridges } from './_.fixtures'
-import { deployNFTWithMint, getAdapterParamsAndFeesAmount } from '../Bridge/_.fixtures'
+import { deployNFTWithMint, getAdapterParamsAndFeesAmount } from '../Mirror/_.fixtures'
 import { loadFixture } from '@nomicfoundation/hardhat-network-helpers'
 import { ethers } from 'hardhat'
 import { NFT } from '../../typechain-types'

@@ -4,12 +4,11 @@ pragma solidity 0.8.18;
 
 import '@openzeppelin/contracts/access/Ownable.sol';
 import './NftFactory.sol';
-import './interfaces/IBridge.sol';
 import '@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol';
 import '@layerzerolabs/solidity-examples/contracts/token/onft/ONFT721Core.sol';
 import '@layerzerolabs/solidity-examples/contracts/lzApp/NonblockingLzApp.sol';
 
-contract Bridge is NonblockingLzApp, NftFactory, IBridge, IERC721Receiver {
+contract Mirror is NonblockingLzApp, NftFactory, IERC721Receiver {
 	uint16 public constant FUNCTION_TYPE_SEND = 1;
 
 	using BytesLib for bytes;
