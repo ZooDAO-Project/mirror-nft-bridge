@@ -37,11 +37,11 @@ contract Mirror is NonblockingLzApp, ReflectionCreator, FeeTaker, IERC721Receive
 		address reflectionAddress,
 		uint256[] tokenIds,
 		string[] tokenURIs,
-		address owner
+		address receiver
 	);
 
 	/// @dev Triggered when NFT unlocked from contract and returned to owner
-	event UnlockedNFT(address originalCollectionAddress, uint256[] tokenIds, address owner);
+	event UnlockedNFT(address originalCollectionAddress, uint256[] tokenIds, address receiver);
 
 	/// @dev Triggered at the start of every bridge process
 	event BridgeNFT(
@@ -50,7 +50,7 @@ contract Mirror is NonblockingLzApp, ReflectionCreator, FeeTaker, IERC721Receive
 		string symbol,
 		uint256[] tokenId,
 		string[] tokenURI,
-		address owner
+		address receiver
 	);
 
 	constructor(
@@ -115,6 +115,7 @@ contract Mirror is NonblockingLzApp, ReflectionCreator, FeeTaker, IERC721Receive
 		address collectionAddr,
 		uint256[] memory tokenIds,
 		uint16 targetNetworkId,
+		address receiver,
 		address payable _refundAddress,
 		address _zroPaymentAddress,
 		bytes memory _adapterParams
@@ -122,6 +123,7 @@ contract Mirror is NonblockingLzApp, ReflectionCreator, FeeTaker, IERC721Receive
 		require(isEligibleCollection[collectionAddr], 'Mirror: collection is not eligible');
 		require(tokenIds.length > 0, "Mirror: tokenIds weren't provided");
 		require(tokenIds.length <= reflectionAmountLimit, "Mirror: can't reflect more than limit");
+		require(receiver != address(0), "Mirror: receiver can't be zero address");
 
 		_deductFee();
 
@@ -158,11 +160,11 @@ contract Mirror is NonblockingLzApp, ReflectionCreator, FeeTaker, IERC721Receive
 			originalCollectionAddress = collectionAddr;
 		}
 
-		bytes memory _payload = abi.encode(originalCollectionAddress, name, symbol, tokenIds, tokenURIs, msg.sender);
+		bytes memory _payload = abi.encode(originalCollectionAddress, name, symbol, tokenIds, tokenURIs, receiver);
 
 		_lzSend(targetNetworkId, _payload, _refundAddress, _zroPaymentAddress, _adapterParams, msg.value - feeAmount);
 
-		emit BridgeNFT(originalCollectionAddress, name, symbol, tokenIds, tokenURIs, msg.sender);
+		emit BridgeNFT(originalCollectionAddress, name, symbol, tokenIds, tokenURIs, receiver);
 	}
 
 	/// @dev Function inherited from NonBlockingLzApp
@@ -191,14 +193,14 @@ contract Mirror is NonblockingLzApp, ReflectionCreator, FeeTaker, IERC721Receive
 	/// @param symbol symbol of original collection to mint ReflectedNFT if needed
 	/// @param tokenIds Array of tokenIds of bridged NFTs to mint exact same tokens or to unlocks it
 	/// @param tokenURIs Array of tokenURIs of bridged NFTs to mint exact same tokens if needed
-	/// @param _owner Address to mint or return token to
+	/// @param receiver Address to mint or return token to
 	function _reflect(
 		address originalCollectionAddr,
 		string memory name,
 		string memory symbol,
 		uint256[] memory tokenIds,
 		string[] memory tokenURIs,
-		address _owner
+		address receiver
 	) internal {
 		bool isOriginalChain = isOriginalChainForCollection[originalCollectionAddr];
 
@@ -206,10 +208,10 @@ contract Mirror is NonblockingLzApp, ReflectionCreator, FeeTaker, IERC721Receive
 			// Unlock NFT and return to owner
 
 			for (uint256 i = 0; i < tokenIds.length; i++) {
-				ReflectedNFT(originalCollectionAddr).safeTransferFrom(address(this), _owner, tokenIds[i]);
+				ReflectedNFT(originalCollectionAddr).safeTransferFrom(address(this), receiver, tokenIds[i]);
 			}
 
-			emit UnlockedNFT(originalCollectionAddr, tokenIds, _owner);
+			emit UnlockedNFT(originalCollectionAddr, tokenIds, receiver);
 		} else {
 			bool isThereReflectionContract = reflection[originalCollectionAddr] != address(0);
 
@@ -227,10 +229,10 @@ contract Mirror is NonblockingLzApp, ReflectionCreator, FeeTaker, IERC721Receive
 
 			// Mint NFT-reflections
 			for (uint256 i = 0; i < tokenIds.length; i++) {
-				ReflectedNFT(reflectionAddr).mint(_owner, tokenIds[i], tokenURIs[i]);
+				ReflectedNFT(reflectionAddr).mint(receiver, tokenIds[i], tokenURIs[i]);
 			}
 
-			emit NFTBridged(originalCollectionAddr, reflectionAddr, tokenIds, tokenURIs, _owner);
+			emit NFTBridged(originalCollectionAddr, reflectionAddr, tokenIds, tokenURIs, receiver);
 		}
 	}
 
