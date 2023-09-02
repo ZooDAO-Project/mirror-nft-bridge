@@ -318,4 +318,29 @@ export const createReflection = function () {
 
 		await expectToBeRevertedWith(tx, 'LzApp: destination chain is not a trusted source')
 	})
+
+	it('should revert on receiver equal to zero address', async function () {
+		const { nft, owner, source, tokenId, targetNetworkId } = await simpleBridgeScenario(TxReturnType.arrowFunction)
+
+		const { fees, adapterParams } = await getAdapterParamsAndFeesAmount(
+			nft,
+			[tokenId],
+			targetNetworkId,
+			source,
+			false
+		)
+
+		const tx = source.createReflection(
+			nft.address,
+			[tokenId],
+			targetNetworkId,
+			ethers.constants.AddressZero,
+			owner.address,
+			ethers.constants.AddressZero,
+			adapterParams,
+			{ value: fees[0] }
+		)
+
+		await expectToBeRevertedWith(tx, "Mirror: receiver can't be zero address")
+	})
 }
