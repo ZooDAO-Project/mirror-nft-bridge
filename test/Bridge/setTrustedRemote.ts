@@ -2,6 +2,7 @@ import { loadFixture } from '@nomicfoundation/hardhat-network-helpers'
 import { expect } from 'chai'
 import { Bridge__factory } from '../../typechain-types'
 import { ethers } from 'hardhat'
+import { expectToBeRevertedWith } from '../_utils'
 
 async function deployBridge() {
 	const Bridge = (await ethers.getContractFactory('Bridge')) as Bridge__factory
@@ -42,6 +43,6 @@ export const setTrustedRemote = function () {
 		const targetNetworkId = 126
 		const tx = source.connect(signers[8]).setTrustedRemote(targetNetworkId, target.address)
 
-		await expect(tx).to.be.revertedWith('Ownable: caller is not the owner')
+		await expectToBeRevertedWith(tx, 'Ownable: caller is not the owner')
 	})
 }

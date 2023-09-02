@@ -6,6 +6,8 @@ import '@openzeppelin/contracts/access/Ownable.sol';
 import './NftFactory.sol';
 import './interfaces/IBridge.sol';
 import '@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol';
+import '@layerzerolabs/solidity-examples/contracts/token/onft/ONFT721Core.sol';
+import '@layerzerolabs/solidity-examples/contracts/lzApp/NonblockingLzApp.sol';
 
 contract Bridge is NftFactory, IBridge, IERC721Receiver, Ownable {
 	mapping(address => bool) original;
@@ -34,6 +36,8 @@ contract Bridge is NftFactory, IBridge, IERC721Receiver, Ownable {
 		string tokenURI,
 		address owner
 	);
+
+	// constructor(address _lzEndpoint) NonblockingLzApp(_lzEndpoint) {}
 
 	function bridge(address collectionAddr, uint256 tokenId, uint256 targetNetworkId) public {
 		zONFT collection = zONFT(collectionAddr);
