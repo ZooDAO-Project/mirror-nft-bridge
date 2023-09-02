@@ -2,18 +2,18 @@ import { loadFixture } from '@nomicfoundation/hardhat-network-helpers'
 import { ethers } from 'hardhat'
 import {
 	Mirror,
-	Bridge__factory,
 	LZEndpointMock,
 	LZEndpointMock__factory,
 	NFT,
 	ONFT721,
 	ZONFT,
+	Mirror__factory,
 } from '../../typechain-types'
 import { deployNFT } from '../NFT/_'
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
 
 export async function deployBridge() {
-	const Mirror = (await ethers.getContractFactory('Mirror')) as Bridge__factory
+	const Mirror = (await ethers.getContractFactory('Mirror')) as Mirror__factory
 	const LzEndpointMock = (await ethers.getContractFactory('LZEndpointMock')) as LZEndpointMock__factory
 
 	const sourceNetworkId = 101 // LZ network ID - ethereum

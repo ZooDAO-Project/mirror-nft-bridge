@@ -3,7 +3,6 @@ import { anyValue } from '@nomicfoundation/hardhat-chai-matchers/withArgs'
 import { NFTReflectionDeployedEvent } from '../../typechain-types/contracts/Mirror'
 import { bridgeBackScenario, TxReturnType, simpleBridgeScenario, getAdapterParamsAndFeesAmount } from './_.fixtures'
 import { ethers } from 'hardhat'
-import { ContractTransaction } from 'ethers'
 
 export const receive = function () {
 	describe('if bridged to original chain', function () {
