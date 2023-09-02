@@ -7,7 +7,7 @@ import 'hardhat-tracer'
 import { setTrustedRemote } from './tasks/setTrustedRemote'
 import { hasStoredPayload } from './tasks/hasStoredPayload'
 import { retryPayload } from './tasks/retryPayload'
-import { bridge } from './tasks/bridge'
+import { createReflection } from './tasks/createReflection'
 
 dotenv.config()
 
@@ -21,7 +21,7 @@ task('accounts', 'Prints the list of accounts', async (taskArgs, hre) => {
 	}
 })
 
-task('bridge', 'send NFT (or zONFT) to another chain', bridge)
+task('bridge', 'send NFT (or zONFT) to another chain', createReflection)
 	.addParam('collection', 'collection address')
 	.addParam('tokenId', 'uint256 tokenId')
 	.addOptionalParam('targetNetwork', 'Name of target network')

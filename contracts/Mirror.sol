@@ -94,10 +94,10 @@ contract Mirror is NonblockingLzApp, NftFactory, IERC721Receiver {
 			address _owner
 		) = abi.decode(_payload, (address, string, string, uint256, string, address));
 
-		_receive(originalCollectionAddr, name, symbol, tokenId, tokenURI, _owner);
+		_reflect(originalCollectionAddr, name, symbol, tokenId, tokenURI, _owner);
 	}
 
-	function _receive(
+	function _reflect(
 		address originalCollectionAddr,
 		string memory name,
 		string memory symbol,

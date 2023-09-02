@@ -1,7 +1,7 @@
 import { loadFixture } from '@nomicfoundation/hardhat-network-helpers'
 import { expect } from 'chai'
-import { bridge } from './bridge'
-import { receive } from './receive'
+import { createReflection } from './createReflection'
+import { reflect } from './reflect'
 import { deployBridge } from './_.fixtures'
 
 describe('Mirror', function () {
@@ -15,6 +15,6 @@ describe('Mirror', function () {
 	// 	expect(await source.lzEndpoint()).to.be.eq(sourceLzEndpoint.address)
 	// 	expect(source.address.length).to.be.eq(42)
 	// })
-	describe('createReflection()', bridge)
-	describe('receive()', receive)
+	describe('createReflection()', createReflection)
+	describe('reflect()', reflect)
 })

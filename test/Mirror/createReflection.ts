@@ -4,7 +4,7 @@ import { expectToBeRevertedWith } from '../_utils'
 import { bridgeBackScenario, TxReturnType, simpleBridgeScenario, deployBridge, deployNFTWithMint } from './_.fixtures'
 import { ethers } from 'hardhat'
 
-export const bridge = function () {
+export const createReflection = function () {
 	describe('if collection is reflection', function () {
 		it('burns reflection NFT', async function () {
 			const { reflection, tx, owner } = await bridgeBackScenario(TxReturnType.arrowFunction)

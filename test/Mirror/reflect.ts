@@ -4,7 +4,7 @@ import { NFTReflectionDeployedEvent } from '../../typechain-types/contracts/Mirr
 import { bridgeBackScenario, TxReturnType, simpleBridgeScenario, getAdapterParamsAndFeesAmount } from './_.fixtures'
 import { ethers } from 'hardhat'
 
-export const receive = function () {
+export const reflect = function () {
 	describe('if bridged to original chain', function () {
 		it('returns locked NFT to owner', async function () {
 			const { target, nft, tx, owner, tokenId } = await bridgeBackScenario(TxReturnType.arrowFunction)
