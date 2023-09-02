@@ -9,6 +9,8 @@ export const bridgeWithChangingOwner = async function () {
 	const { nft, owner, tokenId, signers } = await loadFixture(deployNFTWithMint)
 	const { ethBridge, moonBridge, networkIds, lzEndpoints } = await loadFixture(deployMultipleBridges)
 
+	await ethBridge.changeCollectionEligibility(nft.address, true)
+
 	await nft.approve(ethBridge.address, tokenId)
 
 	const { fees, adapterParams } = await getAdapterParamsAndFeesAmount(

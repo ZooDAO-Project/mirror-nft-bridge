@@ -15,6 +15,8 @@ contract Mirror is NonblockingLzApp, NftFactory, IERC721Receiver {
 
 	mapping(address => bool) public isOriginalChainForCollection;
 
+	mapping(address => bool) public isEligibleCollection;
+
 	/* EVENTS */
 	event NFTReceived(address operator, address from, uint256 tokenId, bytes data);
 
@@ -55,6 +57,8 @@ contract Mirror is NonblockingLzApp, NftFactory, IERC721Receiver {
 		address _zroPaymentAddress,
 		bytes memory _adapterParams
 	) public payable {
+		require(isEligibleCollection[collectionAddr], 'Mirror: collection is not eligible to make reflection of');
+
 		zONFT collection = zONFT(collectionAddr);
 
 		string memory name = collection.name();
@@ -123,12 +127,18 @@ contract Mirror is NonblockingLzApp, NftFactory, IERC721Receiver {
 				collectionAddr = _deployReflection(originalCollectionAddr, name, symbol);
 			}
 
+			isEligibleCollection[collectionAddr] = true;
+
 			zONFT(collectionAddr).mint(_owner, tokenId, tokenURI);
 
 			emit NFTBridged(originalCollectionAddr, tokenId, tokenURI, _owner);
 		}
 
 		// emit MessageReceived(originalCollectionAddr, name, symbol, tokenId, tokenURI, _owner);
+	}
+
+	function changeCollectionEligibility(address collection, bool eligibility) external onlyOwner {
+		isEligibleCollection[collection] = eligibility;
 	}
 
 	/**
