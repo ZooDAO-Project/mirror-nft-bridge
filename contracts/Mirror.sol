@@ -9,6 +9,8 @@ import '@layerzerolabs/solidity-examples/contracts/token/onft/ONFT721Core.sol';
 import '@layerzerolabs/solidity-examples/contracts/lzApp/NonblockingLzApp.sol';
 
 contract Mirror is NonblockingLzApp, ReflectionCreator, IERC721Receiver {
+	uint256 public reflectionAmountLimit = 10;
+
 	mapping(address => bool) public isOriginalChainForCollection;
 
 	mapping(address => bool) public isEligibleCollection;
@@ -75,6 +77,7 @@ contract Mirror is NonblockingLzApp, ReflectionCreator, IERC721Receiver {
 	) public payable {
 		require(isEligibleCollection[collectionAddr], 'Mirror: collection is not eligible to make reflection of');
 		require(tokenIds.length > 0, "Mirror: tokenIds wern't provided");
+		require(tokenIds.length <= reflectionAmountLimit, "Mirror: can't reflect more than limit");
 
 		ReflectedNFT collection = ReflectedNFT(collectionAddr);
 
@@ -171,6 +174,10 @@ contract Mirror is NonblockingLzApp, ReflectionCreator, IERC721Receiver {
 
 	function changeCollectionEligibility(address collection, bool eligibility) external onlyOwner {
 		isEligibleCollection[collection] = eligibility;
+	}
+
+	function changeReflectionAmountLimit(uint256 newReflectionAmountLimit) external onlyOwner {
+		reflectionAmountLimit = newReflectionAmountLimit;
 	}
 
 	/**
