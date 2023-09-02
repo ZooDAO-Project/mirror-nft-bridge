@@ -1,21 +1,47 @@
 # Mirror - NFT Bridge
 
-This repository is about developing contracts to make easier bridging NFTs from ethereum network to moonbeam for ZooDAO Dapp users and devs
+Mirror - is the system of smart contracts that allows any (eligible) collection on any EVM-compatible network to be bridged to any other EVM network in one transaction.
+
+![image](assets/Mirror%20intro.png)
+
+It is developed to allow any non-omnichain NFT collection to be bridged between networks without deploying ProxyONFT for every single collection. Mirror - is the single Proxy contract for all the existing collections!
+
+## Bridge process
+
+It works like following:
+
+1. lock original NFT on contract
+2. Create copy contract (ReflectedNFT contract) on target chain with same name and symbols (if there is no contract for that collection)
+3. Mint copy of original NFT with the same tokenId and tokenURI to owner address.
+
+## Bridging reflection
+
+NFT-reflection can be bridged further to different chains without any limitations - copy will be burned and new copy will be minted on target chain.
+
+## Returning original NFT
+
+When user want to return back his original NFT the process will be as follows:
+
+1. Bridge NFT from current chain back to original
+2. NFT-reflection will be burned
+3. On the target chain original NFT will be unlocked from contract and transferred to owner
 
 ## Problems to solve
 
-1. Most popular collections are located on Ethereum network, but our first version of dapp is one Moonbeam
-2. Wormhole used to bridge seems to be hard to use for devs and users (vision responsible's assumption)
+1. Most popular collections are located on Ethereum network, but first version of ZooDAO DApp is on Moonbeam
+2. Wormhole seems to be hard to use for devs and users to bridge NFTs
 3. Bridged NFTs on moonbeam must be assigned to different contracts to veZoo to be able to work properly
 4. We might want to use moonbeam original collections on arbitrum, then we should use many-to-many networks bridge architecture
-5. **Bridge only eligible collections** (eligible for bridging is nothing to do with eligibility to stake in dapp)
+5. **Bridge only eligible collections** - approved by admin (eligible for bridging is nothing to do with eligibility to stake in ZooDAO DApp)
 
 ## Architecture considerations
 
-1. Use one bridging contract (like proxy ONFT) on ethereum for multiple NFT contracts to save gas
-2. Use multiple contracts on moonbeam to work with veZoo. For every new collection bridged with our solution - deploy new NFT (ONFT) contract on moonbeam and mint NFTs there.
-3. Bridge one/multiple tokens at a time?
-4. Make ONFT collection contracts on moonbeam to store URI for every token (StorageURI OZ contract) - it will allow most contracts to be bridgable with this architecture. Token URI will be passed and stored during bridge.
+1. Use one bridging contract on ethereum for multiple NFT contracts to save gas. Like ProxyOFT, but for multiple collections
+2. Use separate contracts for reflected collections to work with veModel (veZoo) in ZooDAO NFT Battle Arena. For every new collection bridged using Mirror - deploy new NFT contract on target chain and mint NFTs there.
+3. Bridge multiple NFTs at a time
+4. Mint NFTs with same tokenIds and tokenURIs as on source chain. Use StorageURI OZ contract to allow most of collections to be compatible with bridge logic.
+5. Take fee on bridge
+6. Use original collection address as a unique identifier between networks. Original collection address is passed with every bridge message to help identify the moment when NFT will be returned to original chain and should be unlocked.
 
 ## Achitecture
 
@@ -32,24 +58,24 @@ flowchart TB
         end
 
         subgraph bridgedEth[bridged]
-            CopyMoonNft1
-            CopyMoonNft2
-            CopyMoonNft3
+            ReflectedMoonNFT1
+            ReflectedMoonNFT2
+            ReflectedMoonNFT3
         end
 
-        BridgeEth --> NftFactoryEth
+        MirrorEth --> ReflectionCreatorEth
 
-        NftEth1 --> BridgeEth
-        NftEth2 --> BridgeEth
-        NftEth3 --> BridgeEth
+        NftEth1 --> MirrorEth
+        NftEth2 --> MirrorEth
+        NftEth3 --> MirrorEth
 
-        NftFactoryEth --> CopyMoonNft1
-        NftFactoryEth --> CopyMoonNft2
-        NftFactoryEth --> CopyMoonNft3
+        ReflectionCreatorEth --> ReflectedMoonNFT1
+        ReflectionCreatorEth --> ReflectedMoonNFT2
+        ReflectionCreatorEth --> ReflectedMoonNFT3
 
     end
 
-    BridgeEth <-->|collection name,symbol,<br>tokenId,tokenURI,<br>owner| BridgeMoon
+    MirrorEth <-->|original collection addr,<br>collection name,symbol,<br>tokenIds,tokenURIs,<br>owner| MirrorMoon
 
     subgraph moonbeam
         subgraph originalMoon[original]
@@ -59,60 +85,54 @@ flowchart TB
         end
 
         subgraph bridgedMoon[bridged]
-            CopyEthNft1
-            CopyEthNft2
-            CopyEthNft3
+            RelctedEthNFT1
+            RelctedEthNFT2
+            RelctedEthNFT3
         end
 
-        BridgeMoon --> NftFactoryMoon
+        MirrorMoon --> ReflectionCreatorMoon
 
-        NftMoon1 --> BridgeMoon
-        NftMoon2 --> BridgeMoon
-        NftMoon3 --> BridgeMoon
+        NftMoon1 --> MirrorMoon
+        NftMoon2 --> MirrorMoon
+        NftMoon3 --> MirrorMoon
 
-        NftFactoryMoon --> CopyEthNft1
-        NftFactoryMoon --> CopyEthNft2
-        NftFactoryMoon --> CopyEthNft3
+        ReflectionCreatorMoon --> RelctedEthNFT1
+        ReflectionCreatorMoon --> RelctedEthNFT2
+        ReflectionCreatorMoon --> RelctedEthNFT3
     end
 ```
 
-## Example flow
+## Omnichain technology
 
-```mermaid
----
-title: Bridge from ethereum to moonbeam
----
-sequenceDiagram
-    participant U as User
-    participant NFT as NFT (eth)
-    participant PNF as ZooDaoBridge (eth)
-    participant NF as ZooDaoBridge (moon)
-    participant Copy as NftCopy (moon)
+Communication between Mirror contracts is implemented with [**LayerZero**](https://layerzero.network/) as trustless and most simple solution.
 
-    U ->>+ NFT: approve(tokenId)
-    NFT ->>- PNF: allowance
-    U ->>+ PNF: bridge(tokenId, collectionAddress,targetNetwork)
+## Integration
 
-    PNF ->>+ NFT: transferFrom(owner, tokenId)
-    NFT ->>- PNF: NFT with given tokenId
-    PNF ->>+ NFT: name() symbol() tokenURI(tokenId)
-    NFT ->>- PNF: name, symbol, tokenURI
-    PNF ->>- NF: name, symbol, tokenId, tokenURI, owner, contractAddr
+### Bridge NFT
 
-    activate NF
-    alt contract does not exist
-        NF ->> Copy: deploy with <br> name, symbol
-    end
-    NF ->>+ Copy: call mintTo(owner, tokenId, tokenURI)
-    deactivate NF
+1. approve() NFT to Mirror contract address
+2. Get eth value to send via
+    1. _estimateSendFee() -_ for signle NFT
+    2. _estimateSendBatchFee() - for multiple NFTs_
+3. Call _createReflection()_ with eth value got from _estimateSendFee()_
+    1. targetNetworkId - is the ID of network in LZ ecosystem, it differs from chain ID
+    2. zroPaymentAddress - must be zero address
+    3. adapterParams - bytes array containing version of LZ protocol (default - 1) and gasLimit for tx on target chain more on adapterParams below
 
-    Copy ->>- U: mint NFT (moonbeam)
+```Solidity
+function createReflection(
+		address collectionAddr,
+		uint256[] memory tokenIds,
+		uint16 targetNetworkId,
+		address payable _refundAddress,
+		address _zroPaymentAddress,
+		bytes memory _adapterParams
+	) public payable {
 ```
 
-## Future
+### adapterParams
 
-In future this app is going to be used by multiple networks and bridge should work as many-to-many. Route like first ever bridge from ethereum to moonbeam, from moonbeam to arbitrum, from arbitrum back to ethereum. Complex routes with additional networks should be available.
-
-## Multi-chain technology
-
-Communication between Bridge contracts is realized with **LayerZero** technology as trustless and most simple solution.
+```TypeScript
+const RecommendedGas = 2000000 + 100000 * tokenIds.length // gas limit for contract deployment and mint
+const adapterParams = ethers.utils.solidityPack(['uint16', 'uint256'], [1, RecommendedGas])
+```
