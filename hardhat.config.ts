@@ -2,6 +2,7 @@ import * as dotenv from 'dotenv'
 
 import { HardhatUserConfig, task } from 'hardhat/config'
 import '@nomicfoundation/hardhat-toolbox'
+import 'hardhat-gas-reporter'
 
 dotenv.config()
 
@@ -35,8 +36,11 @@ const config: HardhatUserConfig = {
 		},
 	},
 	gasReporter: {
-		enabled: process.env.REPORT_GAS !== undefined,
+		enabled: true,
+		// enabled: process.env.REPORT_GAS ? true : false,
 		currency: 'USD',
+		gasPrice: 30,
+		coinmarketcap: 'af8ddfb6-5886-41fe-80b5-19259a3a03be',
 	},
 	etherscan: {
 		apiKey: process.env.ETHERSCAN_API_KEY,
