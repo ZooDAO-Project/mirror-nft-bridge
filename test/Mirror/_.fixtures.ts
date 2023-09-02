@@ -1,6 +1,6 @@
 import { loadFixture } from '@nomicfoundation/hardhat-network-helpers'
 import { ethers } from 'hardhat'
-import { Mirror, LZEndpointMock__factory, NFT, ONFT721, ZONFT, Mirror__factory } from '../../typechain-types'
+import { Mirror, LZEndpointMock__factory, NFT, ONFT721, Mirror__factory, ReflectedNFT } from '../../typechain-types'
 import { deployNFT } from '../NFT/_'
 
 export async function deployBridge() {
@@ -100,7 +100,7 @@ export async function simpleBridgeScenario(txReturnType: TxReturnType = TxReturn
 	const reflectionAddr = await target.reflection(nft.address)
 
 	const ReflectedNFT = await ethers.getContractFactory('ReflectedNFT')
-	const reflection = ReflectedNFT.attach(reflectionAddr) as ZONFT
+	const reflection = ReflectedNFT.attach(reflectionAddr) as ReflectedNFT
 
 	return {
 		source,
@@ -185,7 +185,7 @@ export async function bridgeBackScenario(txReturnType: TxReturnType = TxReturnTy
 	const reflectionAddr = await target.reflection(nft.address)
 
 	const ReflectedNFT = await ethers.getContractFactory('ReflectedNFT')
-	const reflection = ReflectedNFT.attach(reflectionAddr) as ZONFT
+	const reflection = ReflectedNFT.attach(reflectionAddr) as ReflectedNFT
 
 	// Reversed flow
 	target = [source, (source = target)][0]
@@ -323,7 +323,7 @@ export async function simpleBridgeMultipleScenario(txReturnType: TxReturnType = 
 	const reflectionAddr = await target.reflection(nft.address)
 
 	const ReflectedNFT = await ethers.getContractFactory('ReflectedNFT')
-	const reflection = ReflectedNFT.attach(reflectionAddr) as ZONFT
+	const reflection = ReflectedNFT.attach(reflectionAddr) as ReflectedNFT
 
 	return {
 		source,
@@ -378,7 +378,7 @@ export async function bridgeBackMultipleScenario(txReturnType: TxReturnType = Tx
 	const reflectionAddr = await target.reflection(nft.address)
 
 	const ReflectedNFT = await ethers.getContractFactory('ReflectedNFT')
-	const reflection = ReflectedNFT.attach(reflectionAddr) as ZONFT
+	const reflection = ReflectedNFT.attach(reflectionAddr) as ReflectedNFT
 
 	// Reversed flow
 	target = [source, (source = target)][0]
