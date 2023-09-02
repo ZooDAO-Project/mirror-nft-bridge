@@ -4,6 +4,8 @@ import { HardhatUserConfig, task } from 'hardhat/config'
 import '@nomicfoundation/hardhat-toolbox'
 import 'hardhat-gas-reporter'
 import 'hardhat-tracer'
+import 'solidity-docgen'
+
 import { setTrustedRemote } from './tasks/setTrustedRemote'
 import { hasStoredPayload } from './tasks/hasStoredPayload'
 import { retryPayload } from './tasks/retryPayload'
@@ -195,6 +197,9 @@ const config: HardhatUserConfig = {
 				},
 			},
 		],
+	},
+	docgen: {
+		pages: 'files',
 	},
 }
 

@@ -41,6 +41,7 @@
   },
   "dependencies": {
     "@layerzerolabs/solidity-examples": "^0.0.10",
-    "hardhat-tracer": "^2.2.2"
+    "hardhat-tracer": "^2.2.2",
+    "solidity-docgen": "^0.6.0-beta.35"
   }
 }
