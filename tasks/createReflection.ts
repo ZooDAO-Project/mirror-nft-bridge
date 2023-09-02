@@ -31,6 +31,7 @@ export async function createReflection(taskArgs: any, hre: HardhatRuntimeEnviron
 	const localBridgeAddress = bridgeAddresses[mode][network]
 	const remoteBridgeAddress = bridgeAddresses[mode][targetNetwork as SupportedNetwork]
 
+	console.log(`source ${localBridgeAddress}\nremote ${remoteBridgeAddress}`)
 	const source = Mirror.attach(localBridgeAddress) as Mirror
 
 	const target = Mirror.attach(remoteBridgeAddress) as Mirror
@@ -55,7 +56,6 @@ export async function createReflection(taskArgs: any, hre: HardhatRuntimeEnviron
 	)
 
 	console.log(`fees[0] (wei): ${fees[0]} / (eth): ${hre.ethers.utils.formatEther(fees[0])}`)
-	console.log()
 	try {
 		const tx = await source.createReflection(
 			taskArgs.collection, // 'from' address to send tokens
@@ -71,6 +71,7 @@ export async function createReflection(taskArgs: any, hre: HardhatRuntimeEnviron
 		)
 		console.log(` tx: ${tx.hash}`)
 	} catch (e: any) {
+		console.log(e)
 		if (e.error?.message.includes('Message sender must own the OmnichainNFT.')) {
 			console.log('*Message sender must own the OmnichainNFT.*')
 		} else if (e.error.message.includes('This chain is not a trusted source source.')) {
@@ -89,9 +90,10 @@ export async function getAdapterParamsAndFeesAmount(
 	isReflectionDeployed: boolean
 ) {
 	const GasWithDeploy = '2100000'
-	const GasOnRegularBridge = '350000'
+	const GasOnRegularBridge = '400000'
 
 	const RecommendedGas = isReflectionDeployed ? GasOnRegularBridge : GasWithDeploy
+	console.log('Gas expenditure on remote tx: ', Number(RecommendedGas) / 1000 + 'k')
 
 	const adapterParams = ethers.utils.solidityPack(['uint16', 'uint256'], [1, RecommendedGas]) // default adapterParams example
 	// const abi = new ethers.utils.AbiCoder()
