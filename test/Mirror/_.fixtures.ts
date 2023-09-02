@@ -71,7 +71,7 @@ export async function simpleBridgeScenario(txReturnType: TxReturnType = TxReturn
 
 	switch (txReturnType) {
 		case TxReturnType.awaited:
-			tx = await source.bridge(
+			tx = await source.createReflection(
 				nft.address,
 				tokenId,
 				targetNetworkId,
@@ -84,7 +84,7 @@ export async function simpleBridgeScenario(txReturnType: TxReturnType = TxReturn
 			)
 			break
 		case TxReturnType.unawaited:
-			tx = source.bridge(
+			tx = source.createReflection(
 				nft.address,
 				tokenId,
 				targetNetworkId,
@@ -98,7 +98,7 @@ export async function simpleBridgeScenario(txReturnType: TxReturnType = TxReturn
 			break
 		case TxReturnType.arrowFunction:
 			tx = () =>
-				source.bridge(
+				source.createReflection(
 					nft.address,
 					tokenId,
 					targetNetworkId,
@@ -181,7 +181,7 @@ export async function bridgeBackScenario(txReturnType: TxReturnType = TxReturnTy
 		sourceLzEndpoint
 	)
 
-	await source.bridge(
+	await source.createReflection(
 		nft.address,
 		tokenId,
 		targetNetworkId,
@@ -205,7 +205,7 @@ export async function bridgeBackScenario(txReturnType: TxReturnType = TxReturnTy
 
 	switch (txReturnType) {
 		case TxReturnType.awaited:
-			tx = await source.bridge(
+			tx = await source.createReflection(
 				copy.address,
 				tokenId,
 				targetNetworkId,
@@ -218,7 +218,7 @@ export async function bridgeBackScenario(txReturnType: TxReturnType = TxReturnTy
 			)
 			break
 		case TxReturnType.unawaited:
-			tx = source.bridge(
+			tx = source.createReflection(
 				copy.address,
 				tokenId,
 				targetNetworkId,
@@ -232,7 +232,7 @@ export async function bridgeBackScenario(txReturnType: TxReturnType = TxReturnTy
 			break
 		case TxReturnType.arrowFunction:
 			tx = () =>
-				source.bridge(
+				source.createReflection(
 					copy.address,
 					tokenId,
 					targetNetworkId,

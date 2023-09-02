@@ -47,7 +47,7 @@ contract Mirror is NonblockingLzApp, NftFactory, IERC721Receiver {
 		return lzEndpoint.estimateFees(_dstChainId, address(this), payload, _useZro, _adapterParams);
 	}
 
-	function bridge(
+	function createReflection(
 		address collectionAddr,
 		uint256 tokenId,
 		uint16 targetNetworkId,

@@ -21,9 +21,17 @@ export const complexRoute = async function () {
 	)
 
 	const zeroAddress = ethers.constants.AddressZero
-	await ethBridge.bridge(nft.address, tokenId, networkIds.moonNetworkId, owner.address, zeroAddress, adapterParams, {
-		value: fees[0],
-	})
+	await ethBridge.createReflection(
+		nft.address,
+		tokenId,
+		networkIds.moonNetworkId,
+		owner.address,
+		zeroAddress,
+		adapterParams,
+		{
+			value: fees[0],
+		}
+	)
 
 	expect(await nft.ownerOf(tokenId)).to.be.eq(ethBridge.address)
 
@@ -32,7 +40,7 @@ export const complexRoute = async function () {
 
 	expect(await moonCopy.ownerOf(tokenId)).to.be.eq(owner.address)
 
-	await moonBridge.bridge(
+	await moonBridge.createReflection(
 		moonCopyNftAddr,
 		tokenId,
 		networkIds.arbNetworkId,
@@ -51,7 +59,7 @@ export const complexRoute = async function () {
 
 	expect(await arbCopy.ownerOf(tokenId)).to.be.eq(owner.address)
 
-	await arbBridge.bridge(
+	await arbBridge.createReflection(
 		arbCopyNftAddr,
 		tokenId,
 		networkIds.ethNetworkId,

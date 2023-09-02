@@ -68,7 +68,7 @@ export const receive = function () {
 					sourceLzEndpoint
 				)
 
-				const tx = await source.bridge(
+				const tx = await source.createReflection(
 					nft.address,
 					tokenId,
 					targetNetworkId,
@@ -101,7 +101,7 @@ export const receive = function () {
 					sourceLzEndpoint
 				)
 
-				const tx = await source.bridge(
+				const tx = await source.createReflection(
 					nft.address,
 					tokenId,
 					targetNetworkId,

@@ -25,7 +25,7 @@ export const cheaperRepeatedBridges = async function () {
 
 	expect(await nft.ownerOf(tokenId)).to.be.eq(owner.address)
 
-	const tx = await ethBridge.bridge(
+	const tx = await ethBridge.createReflection(
 		nft.address,
 		tokenId,
 		networkIds.moonNetworkId,
@@ -63,9 +63,17 @@ export const cheaperRepeatedBridges = async function () {
 
 	const repeatedBridge = await ethBridge
 		.connect(signers[6])
-		.bridge(nft.address, tokenId + 1, networkIds.moonNetworkId, owner.address, zeroAddress, newAdapterParams, {
-			value: lesserFees[0],
-		})
+		.createReflection(
+			nft.address,
+			tokenId + 1,
+			networkIds.moonNetworkId,
+			owner.address,
+			zeroAddress,
+			newAdapterParams,
+			{
+				value: lesserFees[0],
+			}
+		)
 
 	expect(repeatedBridge).to.emit(moonBridge, 'NFTBridged')
 	// expect(repeatedBridge).not.to.be.reverted

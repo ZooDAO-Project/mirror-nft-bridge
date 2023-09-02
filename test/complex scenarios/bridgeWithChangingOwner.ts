@@ -24,9 +24,17 @@ export const bridgeWithChangingOwner = async function () {
 
 	expect(await nft.ownerOf(tokenId)).to.be.eq(owner.address)
 
-	await ethBridge.bridge(nft.address, tokenId, networkIds.moonNetworkId, owner.address, zeroAddress, adapterParams, {
-		value: fees[0],
-	})
+	await ethBridge.createReflection(
+		nft.address,
+		tokenId,
+		networkIds.moonNetworkId,
+		owner.address,
+		zeroAddress,
+		adapterParams,
+		{
+			value: fees[0],
+		}
+	)
 
 	expect(await nft.ownerOf(tokenId)).to.be.eq(ethBridge.address)
 
@@ -40,9 +48,17 @@ export const bridgeWithChangingOwner = async function () {
 
 	await moonBridge
 		.connect(signers[5])
-		.bridge(moonCopyNftAddr, tokenId, networkIds.ethNetworkId, owner.address, zeroAddress, adapterParams, {
-			value: fees[0],
-		})
+		.createReflection(
+			moonCopyNftAddr,
+			tokenId,
+			networkIds.ethNetworkId,
+			owner.address,
+			zeroAddress,
+			adapterParams,
+			{
+				value: fees[0],
+			}
+		)
 
 	expect(await moonCopy.balanceOf(signers[5].address)).to.be.eq(0)
 

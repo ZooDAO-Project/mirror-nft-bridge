@@ -15,6 +15,6 @@ describe('Mirror', function () {
 	// 	expect(await source.lzEndpoint()).to.be.eq(sourceLzEndpoint.address)
 	// 	expect(source.address.length).to.be.eq(42)
 	// })
-	describe('bridge()', bridge)
+	describe('createReflection()', bridge)
 	describe('receive()', receive)
 })

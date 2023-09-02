@@ -45,7 +45,7 @@ export const bridge = function () {
 				const { nft, owner } = await loadFixture(deployNFTWithMint)
 
 				const tokenId = 1
-				const tx = source.bridge(
+				const tx = source.createReflection(
 					nft.address,
 					tokenId,
 					targetNetworkId,

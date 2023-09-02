@@ -9,7 +9,7 @@ import { bridgeAddresses } from '../constants/bridgeAddresses'
 
 type SupportedNetwork = 'ethereum' | 'moonbeam' | 'fantom' | 'arbitrum'
 
-export async function bridge(taskArgs: any, hre: HardhatRuntimeEnvironment) {
+export async function createReflection(taskArgs: any, hre: HardhatRuntimeEnvironment) {
 	const signers = await hre.ethers.getSigners()
 	const owner = signers[0]
 	const tokenId = taskArgs.tokenId
@@ -59,7 +59,7 @@ export async function bridge(taskArgs: any, hre: HardhatRuntimeEnvironment) {
 	console.log(`fees[0] (wei): ${fees[0]} / (eth): ${hre.ethers.utils.formatEther(fees[0])}`)
 	console.log()
 	try {
-		const tx = await source.bridge(
+		const tx = await source.createReflection(
 			taskArgs.collection, // 'from' address to send tokens
 			taskArgs.tokenId,
 			remoteChainId, // remote LayerZero chainId
@@ -69,7 +69,7 @@ export async function bridge(taskArgs: any, hre: HardhatRuntimeEnvironment) {
 			{ value: fees[0] }
 		)
 		console.log(
-			`✅ [${hre.network.name}] bridge(${taskArgs.collection}, ${tokenId}, ${remoteChainId} (${taskArgs.targetNetwork}))`
+			`✅ [${hre.network.name}] createReflection(${taskArgs.collection}, ${tokenId}, ${remoteChainId} (${taskArgs.targetNetwork}))`
 		)
 		console.log(` tx: ${tx.hash}`)
 	} catch (e: any) {
