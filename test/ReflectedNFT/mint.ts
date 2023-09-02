@@ -20,6 +20,6 @@ export const mint = function () {
 
 		const tx = reflection.mint(owner.address, 111, 'url.com')
 
-		expectToBeRevertedWith(tx, 'Ownable')
+		expectToBeRevertedWith(tx, 'Ownable: caller is not the owner')
 	})
 }
