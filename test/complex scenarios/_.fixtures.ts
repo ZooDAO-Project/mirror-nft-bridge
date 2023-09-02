@@ -25,9 +25,12 @@ export async function deployMultipleBridges() {
 		arbLzEndpoint,
 	}
 
-	const ethBridge = await Mirror.deploy(ethLzEndpoint.address)
-	const moonBridge = await Mirror.deploy(moonLzEndpoint.address)
-	const arbBridge = await Mirror.deploy(arbLzEndpoint.address)
+	const signers = await ethers.getSigners()
+	const feeReceiver = signers[9].address
+	const feeAmount = 1000000000000000
+	const ethBridge = await Mirror.deploy(ethLzEndpoint.address, feeAmount, feeReceiver)
+	const moonBridge = await Mirror.deploy(moonLzEndpoint.address, feeAmount, feeReceiver)
+	const arbBridge = await Mirror.deploy(arbLzEndpoint.address, feeAmount, feeReceiver)
 
 	await ethBridge.deployed()
 	await moonBridge.deployed()
@@ -58,8 +61,6 @@ export async function deployMultipleBridges() {
 	// arbitrum: ethereum, moonbeam
 	await arbBridge.setTrustedRemoteAddress(ethNetworkId, ethBridge.address)
 	await arbBridge.setTrustedRemoteAddress(moonNetworkId, moonBridge.address)
-
-	const signers = await ethers.getSigners()
 
 	return { ethBridge, moonBridge, arbBridge, networkIds, lzEndpoints, signers }
 }

@@ -2,6 +2,8 @@ import { loadFixture } from '@nomicfoundation/hardhat-network-helpers'
 import { deployBridge, deployNFTWithMint } from './_.fixtures'
 import { ethers } from 'hardhat'
 import { expect } from 'chai'
+import { deepCopy } from 'ethers/lib/utils'
+import { log } from 'console'
 
 export const estimateSendFee = async function () {
 	it('Estimation is the same as in the lzEndpoint', async function () {
@@ -26,7 +28,13 @@ export const estimateSendFee = async function () {
 		)
 		const fees = await source.estimateSendFee(nft.address, tokenId, targetNetworkId, false, adapterParams)
 
-		expect(fees).to.be.deep.eq(feesFromEndpoint)
+		const writableFees = JSON.parse(JSON.stringify(fees))
+		log(writableFees)
+		const feeAmountToPlatform = await source.feeAmount()
+		writableFees[0] = writableFees[0].sub(feeAmountToPlatform)
+		writableFees.nativeFee = writableFees.nativeFee.sub(feeAmountToPlatform)
+
+		expect(writableFees).to.be.deep.eq(feesFromEndpoint)
 	})
 
 	it('Batch send estimation with multiple tokenIds and same amount of tokenURIs', async function () {
@@ -57,6 +65,10 @@ export const estimateSendFee = async function () {
 			false,
 			adapterParams
 		)
+
+		const feeAmountToPlatform = await source.feeAmount()
+		batchFees[0] = batchFees[0].sub(feeAmountToPlatform)
+		batchFees.nativeFee = batchFees.nativeFee.sub(feeAmountToPlatform)
 
 		expect(batchFees).to.be.deep.eq(feesFromEndpoint)
 	})

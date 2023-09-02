@@ -88,7 +88,8 @@ export const createReflection = function () {
 					targetNetworkId,
 					owner.address,
 					ethers.constants.AddressZero,
-					'0x'
+					'0x',
+					{ value: '1'.padEnd(18, '0') }
 				)
 
 				await expectToBeRevertedWith(tx, 'ERC721: caller is not token owner or approved')

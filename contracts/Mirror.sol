@@ -7,6 +7,7 @@ import './ReflectionCreator.sol';
 import '@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol';
 import '@layerzerolabs/solidity-examples/contracts/token/onft/ONFT721Core.sol';
 import '@layerzerolabs/solidity-examples/contracts/lzApp/NonblockingLzApp.sol';
+import './FeeTaker.sol';
 
 /// @title NFT bridge named Mirror
 /// @author 0xslava
@@ -18,7 +19,7 @@ import '@layerzerolabs/solidity-examples/contracts/lzApp/NonblockingLzApp.sol';
 /// @dev When collection bridged from source to target chain for the first time - deploys ReflectedNFT contract
 /// @dev If collection was already bridged to target chain before - uses existing ReflectedNFT contract
 /// @dev For creating ReflectedNFT contracts uses original collection's name and symbol
-contract Mirror is NonblockingLzApp, ReflectionCreator, IERC721Receiver {
+contract Mirror is NonblockingLzApp, ReflectionCreator, FeeTaker, IERC721Receiver {
 	/// @notice Limit for amount of tokens being bridged in single transaction
 	uint256 public reflectionAmountLimit = 10;
 
@@ -48,7 +49,11 @@ contract Mirror is NonblockingLzApp, ReflectionCreator, IERC721Receiver {
 		address owner
 	);
 
-	constructor(address _lzEndpoint) NonblockingLzApp(_lzEndpoint) {}
+	constructor(
+		address _lzEndpoint,
+		uint256 _feeAmount,
+		address _feeReceiver
+	) NonblockingLzApp(_lzEndpoint) FeeTaker(_feeAmount, _feeReceiver) {}
 
 	/// @notice Estimates fee needed to bridge signle token to target chain
 	function estimateSendFee(
@@ -83,7 +88,8 @@ contract Mirror is NonblockingLzApp, ReflectionCreator, IERC721Receiver {
 
 		bytes memory payload = abi.encode(collection, name, symbol, tokenIds, tokenURIs, msg.sender);
 
-		return lzEndpoint.estimateFees(targetNetworkId, address(this), payload, useZro, adapterParams);
+		(nativeFee, zroFee) = lzEndpoint.estimateFees(targetNetworkId, address(this), payload, useZro, adapterParams);
+		nativeFee += feeAmount;
 	}
 
 	/// @notice Bridges NFT to target chain
@@ -113,6 +119,8 @@ contract Mirror is NonblockingLzApp, ReflectionCreator, IERC721Receiver {
 		require(isEligibleCollection[collectionAddr], 'Mirror: collection is not eligible to make reflection of');
 		require(tokenIds.length > 0, "Mirror: tokenIds wern't provided");
 		require(tokenIds.length <= reflectionAmountLimit, "Mirror: can't reflect more than limit");
+
+		_deductFee();
 
 		ReflectedNFT collection = ReflectedNFT(collectionAddr);
 
@@ -150,7 +158,7 @@ contract Mirror is NonblockingLzApp, ReflectionCreator, IERC721Receiver {
 
 		bytes memory _payload = abi.encode(originalCollectionAddress, name, symbol, tokenIds, tokenURIs, msg.sender);
 
-		_lzSend(targetNetworkId, _payload, _refundAddress, _zroPaymentAddress, _adapterParams, msg.value);
+		_lzSend(targetNetworkId, _payload, _refundAddress, _zroPaymentAddress, _adapterParams, msg.value - feeAmount);
 
 		emit BridgeNFT(originalCollectionAddress, name, symbol, tokenIds, tokenURIs, msg.sender);
 	}
