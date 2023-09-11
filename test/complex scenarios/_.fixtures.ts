@@ -1,5 +1,5 @@
 import { ethers } from 'hardhat'
-import { LZEndpointMock__factory, Mirror__factory } from '../../typechain-types'
+import { LZEndpointMock__factory, Mirror__factory, ReflectedNFT__factory } from '../../typechain-types'
 
 export async function deployMultipleBridges() {
 	const Mirror = (await ethers.getContractFactory('Mirror')) as Mirror__factory
@@ -25,12 +25,32 @@ export async function deployMultipleBridges() {
 		arbLzEndpoint,
 	}
 
+	const ReflectedNFT = (await ethers.getContractFactory('ReflectedNFT')) as ReflectedNFT__factory
+	const reflectedNFTImplementation = await ReflectedNFT.deploy('Reflection Implementation', 'RI')
+
 	const signers = await ethers.getSigners()
 	const feeReceiver = signers[9].address
 	const feeAmount = 1000000000000000
-	const ethBridge = await Mirror.deploy(ethLzEndpoint.address, feeAmount, feeReceiver)
-	const moonBridge = await Mirror.deploy(moonLzEndpoint.address, feeAmount, feeReceiver)
-	const arbBridge = await Mirror.deploy(arbLzEndpoint.address, feeAmount, feeReceiver)
+	const ethBridge = await Mirror.deploy(
+		ethLzEndpoint.address,
+		feeAmount,
+		feeReceiver,
+		reflectedNFTImplementation.address
+	)
+	const moonBridge = await Mirror.deploy(
+		moonLzEndpoint.address,
+		feeAmount,
+		feeReceiver,
+		reflectedNFTImplementation.address
+	)
+	const arbBridge = await Mirror.deploy(
+		arbLzEndpoint.address,
+		feeAmount,
+		feeReceiver,
+		reflectedNFTImplementation.address
+	)
+
+	await reflectedNFTImplementation.transferOwnership(ethBridge.address)
 
 	await ethBridge.deployed()
 	await moonBridge.deployed()

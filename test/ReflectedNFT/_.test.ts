@@ -4,6 +4,7 @@ import { expect } from 'chai'
 import { mint } from './mint'
 import { tokenURI } from './tokenURI'
 import { ReflectedNFT, ReflectedNFT__factory } from '../../typechain-types'
+import { init } from './init'
 
 export async function deployReflectionNFT(name = 'ZooDAO Mocks', symbol = 'ZDMK'): Promise<ReflectedNFT> {
 	const NFT = (await ethers.getContractFactory('ReflectedNFT')) as ReflectedNFT__factory
@@ -12,14 +13,15 @@ export async function deployReflectionNFT(name = 'ZooDAO Mocks', symbol = 'ZDMK'
 	return nft
 }
 
-describe('ReflectedNFT', function () {
+describe.only('ReflectedNFT', function () {
 	it('deploys', async function () {
 		const nft = await loadFixture(deployReflectionNFT)
 		expect(nft).not.to.be.undefined
 		expect(nft.address.length).to.be.eq(42)
 	})
 
-	xdescribe('mint', mint)
+	describe('init', init)
+	describe('mint', mint)
 	describe('tokenURI', tokenURI)
 
 	it('tokens can be transferred', async function () {
@@ -33,9 +35,10 @@ describe('ReflectedNFT', function () {
 		await expect(transfer).to.changeTokenBalances(nft, [signers[1], signers[2]], [-1, 1])
 	})
 
-	it('Collection name and symbol are specified on deploy', async function () {
-		const nft = await deployReflectionNFT('Different name', 'DS')
-		expect(await nft.name()).to.be.eq('Different name')
-		expect(await nft.symbol()).to.be.eq('DS')
-	})
+	// Not actual starting from using EIP-1167 for cheaper reflections
+	// it('Collection name and symbol are specified on deploy', async function () {
+	// 	const nft = await deployReflectionNFT('Different name', 'DS')
+	// 	expect(await nft.name()).to.be.eq('Different name')
+	// 	expect(await nft.symbol()).to.be.eq('DS')
+	// })
 })

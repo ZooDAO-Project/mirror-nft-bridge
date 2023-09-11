@@ -56,8 +56,9 @@ contract Mirror is NonblockingLzApp, ReflectionCreator, FeeTaker, IERC721Receive
 	constructor(
 		address _lzEndpoint,
 		uint256 _feeAmount,
-		address _feeReceiver
-	) NonblockingLzApp(_lzEndpoint) FeeTaker(_feeAmount, _feeReceiver) {}
+		address _feeReceiver,
+		address _reflectedNftImplementation
+	) NonblockingLzApp(_lzEndpoint) FeeTaker(_feeAmount, _feeReceiver) ReflectionCreator(_reflectedNftImplementation) {}
 
 	/// @notice Estimates fee needed to bridge signle token to target chain
 	function estimateSendFee(

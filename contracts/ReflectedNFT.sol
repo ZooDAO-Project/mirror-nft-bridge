@@ -13,7 +13,10 @@ import '@openzeppelin/contracts/access/Ownable.sol';
 /// @dev Inherits ERC721URIStorage to be able to handle collections with any tokenURI function logic
 /// @dev ERC721URIStorage allows to point to exact same metadata as in original collection
 contract ReflectedNFT is ERC721URIStorage, Ownable {
-	constructor(string memory _name, string memory _symbol) ERC721(_name, _symbol) {}
+	string internal _name;
+	string internal _symbol;
+
+	constructor(string memory name_, string memory symbol_) ERC721(name_, symbol_) {}
 
 	/// @notice Mints NFT with given tokenId and tokenURI
 	/// @notice tokenId and tokenURI are exact same as of original NFT
@@ -24,6 +27,29 @@ contract ReflectedNFT is ERC721URIStorage, Ownable {
 	function mint(address to, uint tokenId, string calldata _tokenURI) public onlyOwner {
 		_mint(to, tokenId);
 		_setTokenURI(tokenId, _tokenURI);
+	}
+
+	/// @notice Function to be called by minimal proxy clone
+	/// @dev initializes name, symbols, owner
+	function init(string calldata name_, string calldata symbol_) external {
+		require(
+			bytes(_name).length == 0 && bytes(_symbol).length == 0 && owner() == address(0),
+			'ReflectedNFT: already initialized'
+		);
+		_name = name_;
+		_symbol = symbol_;
+		_transferOwnership(msg.sender);
+	}
+
+	function name() public view override returns (string memory) {
+		return _name;
+	}
+
+	/**
+	 * @dev See {IERC721Metadata-symbol}.
+	 */
+	function symbol() public view override returns (string memory) {
+		return _symbol;
 	}
 
 	/// @notice Destroys NFT reflection (copy) on bridge

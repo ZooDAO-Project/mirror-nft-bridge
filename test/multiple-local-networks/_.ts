@@ -1,6 +1,6 @@
 import { expect } from 'chai'
 import hardhat, { ethers, run } from 'hardhat'
-import { LZEndpointMock__factory, Mirror__factory } from '../../typechain-types'
+import { LZEndpointMock__factory } from '../../typechain-types'
 
 describe('Testing setting up multiple local hardhat networks', function () {
 	let initialStateSnapshotId = ''

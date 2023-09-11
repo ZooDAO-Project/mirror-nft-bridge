@@ -1,8 +1,15 @@
 import { loadFixture } from '@nomicfoundation/hardhat-network-helpers'
 import { ethers } from 'hardhat'
-import { Mirror, LZEndpointMock__factory, NFT, ONFT721, Mirror__factory, ReflectedNFT } from '../../typechain-types'
+import {
+	Mirror,
+	LZEndpointMock__factory,
+	NFT,
+	ONFT721,
+	Mirror__factory,
+	ReflectedNFT,
+	ReflectedNFT__factory,
+} from '../../typechain-types'
 import { deployNFT } from '../NFT/_'
-import { formatUnits } from 'ethers/lib/utils'
 
 export async function deployBridge() {
 	const Mirror = (await ethers.getContractFactory('Mirror')) as Mirror__factory
@@ -14,11 +21,27 @@ export async function deployBridge() {
 	const sourceLzEndpoint = await LzEndpointMock.deploy(sourceNetworkId)
 	const targetLzEndpoint = await LzEndpointMock.deploy(targetNetworkId)
 
+	const ReflectedNFT = (await ethers.getContractFactory('ReflectedNFT')) as ReflectedNFT__factory
+	const reflectedNFTImplementation = await ReflectedNFT.deploy('Reflection Implementation', 'RI')
+
 	const signers = await ethers.getSigners()
 	const feeReceiver = signers[9].address
 	const feeAmount = 1000000000000000
-	const source = await Mirror.deploy(sourceLzEndpoint.address, feeAmount, feeReceiver)
-	const target = await Mirror.deploy(targetLzEndpoint.address, feeAmount, feeReceiver)
+
+	const source = await Mirror.deploy(
+		sourceLzEndpoint.address,
+		feeAmount,
+		feeReceiver,
+		reflectedNFTImplementation.address
+	)
+	const target = await Mirror.deploy(
+		targetLzEndpoint.address,
+		feeAmount,
+		feeReceiver,
+		reflectedNFTImplementation.address
+	)
+
+	await reflectedNFTImplementation.transferOwnership(target.address)
 
 	await source.deployed()
 	await target.deployed()
