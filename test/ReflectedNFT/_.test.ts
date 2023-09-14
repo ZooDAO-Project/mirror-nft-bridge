@@ -13,7 +13,7 @@ export async function deployReflectionNFT(name = 'ZooDAO Mocks', symbol = 'ZDMK'
 	return nft
 }
 
-describe.only('ReflectedNFT', function () {
+describe('ReflectedNFT', function () {
 	it('deploys', async function () {
 		const nft = await loadFixture(deployReflectionNFT)
 		expect(nft).not.to.be.undefined
