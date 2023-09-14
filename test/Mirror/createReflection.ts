@@ -38,12 +38,13 @@ export const createReflection = function () {
 		})
 
 		it('sends and receives message with original collection address, not reflection address', async function () {
-			const { source, target, reflection, nft, tx, owner, tokenId } = await bridgeBackScenario()
-
+			const { source, target, targetChainId, reflection, nft, tx, owner, tokenId } = await bridgeBackScenario()
+			// targetNetworkId - Ethereum in this example - NFT originated from Ethereum
+			// But sourceChainId is Ethereum chain ID
 			await expect(tx)
 				.to.emit(source, 'BridgeNFT')
 				.withArgs(
-					nft.address,
+					[targetChainId, nft.address],
 					await reflection.name(),
 					await reflection.symbol(),
 					[tokenId],
@@ -106,12 +107,12 @@ export const createReflection = function () {
 	})
 
 	it(`Sends message with params (collectionAddr, name, symbol, tokenId, owner) to another bridge contract`, async function () {
-		const { nft, owner, tokenId, tx, source } = await simpleBridgeScenario()
+		const { nft, sourceChainId, owner, tokenId, tx, source } = await simpleBridgeScenario()
 
 		await expect(tx)
 			.to.emit(source, 'BridgeNFT')
 			.withArgs(
-				nft.address,
+				[sourceChainId, nft.address],
 				await nft.name(),
 				await nft.symbol(),
 				[tokenId],
@@ -121,11 +122,11 @@ export const createReflection = function () {
 	})
 
 	it(`Sends message to bridge contract on target network (mock logic atm, same network)`, async function () {
-		const { nft, owner, tokenId, tx, target } = await simpleBridgeScenario()
+		const { nft, sourceChainId, owner, tokenId, tx, target } = await simpleBridgeScenario()
 
 		await expect(tx)
 			.to.emit(target, 'NFTBridged')
-			.withArgs(nft.address, anyValue, [tokenId], [await nft.tokenURI(tokenId)], owner.address)
+			.withArgs([sourceChainId, nft.address], anyValue, [tokenId], [await nft.tokenURI(tokenId)], owner.address)
 	})
 
 	it('should revert on repeating tokenIds', async function () {
@@ -296,11 +297,11 @@ export const createReflection = function () {
 	it('should revert on incorrect target network ID', async function () {
 		const { nft, owner, source, tokenId } = await simpleBridgeScenario(TxReturnType.arrowFunction)
 
-		const incorrectTargetNetowrkId = 100
+		const incorrectTargetNetworkId = 100
 		const { fees, adapterParams } = await getAdapterParamsAndFeesAmount(
 			nft,
 			[tokenId],
-			incorrectTargetNetowrkId,
+			incorrectTargetNetworkId,
 			source,
 			false
 		)
@@ -308,7 +309,7 @@ export const createReflection = function () {
 		const tx = source.createReflection(
 			nft.address,
 			[tokenId],
-			incorrectTargetNetowrkId,
+			incorrectTargetNetworkId,
 			owner.address,
 			owner.address,
 			ethers.constants.AddressZero,

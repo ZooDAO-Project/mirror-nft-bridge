@@ -22,11 +22,15 @@ abstract contract ReflectionCreator {
 	/// @dev collectionAddr => isReflection
 	mapping(address => bool) public isReflection;
 
+	struct Origin {
+		uint256 chainId;
+		address collectionAddress;
+	}
 	/// @notice Returns original collection address by address of it's reflection (copy) on current chain
 	/// @dev reflectionAddress => origCollAddr
-	mapping(address => address) public originalCollectionAddresses;
+	mapping(address => Origin) public origins;
 
-	event NFTReflectionDeployed(address reflectionContractAddress, address originalContractAddress);
+	event NFTReflectionDeployed(address reflectionContractAddress, Origin origin);
 
 	constructor(address _implementation) {
 		// Sets address for ReflectedNFT implementation contract
@@ -35,23 +39,23 @@ abstract contract ReflectionCreator {
 	}
 
 	/// @notice Creates reflection (copy) of oringinal collection with original name and symbol
-	/// @param originalCollectionAddr Address of original collection on original chain as unique identifier
+	/// @param origin chainId and original collection address
 	/// @param name name of original collection to pass to ReflectedNFT
 	/// @param symbol symbol of original collection to pass to ReflectedNFT
 	/// @return address of deployed ReflectedNFT contract
 	function _deployReflection(
-		address originalCollectionAddr,
+		Origin memory origin,
 		string memory name,
 		string memory symbol
 	) internal returns (address) {
 		address _reflection = Clones.clone(implementation);
 		ReflectedNFT(_reflection).init(name, symbol);
 
-		reflection[originalCollectionAddr] = _reflection;
+		reflection[origin.collectionAddress] = _reflection;
 		isReflection[_reflection] = true;
-		originalCollectionAddresses[_reflection] = originalCollectionAddr;
+		origins[_reflection] = origin;
 
-		emit NFTReflectionDeployed(_reflection, originalCollectionAddr);
+		emit NFTReflectionDeployed(_reflection, origin);
 
 		return _reflection;
 	}

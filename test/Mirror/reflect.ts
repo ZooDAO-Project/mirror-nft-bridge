@@ -42,9 +42,11 @@ export const reflect = function () {
 	describe('else bridged to non-original chain', function () {
 		describe(`if reflection contract doesn't exist`, function () {
 			it(`deploys new NFT contract for bridged tokens`, async function () {
-				const { target, nft, tx } = await simpleBridgeScenario()
+				const { target, nft, tx, sourceChainId } = await simpleBridgeScenario()
 
-				await expect(tx).to.emit(target, 'NFTReflectionDeployed').withArgs(anyValue, nft.address)
+				await expect(tx)
+					.to.emit(target, 'NFTReflectionDeployed')
+					.withArgs(anyValue, [sourceChainId, nft.address])
 			})
 
 			it(`records deployed contract's address to mapping: reflection`, async function () {
@@ -59,12 +61,13 @@ export const reflect = function () {
 				expect(await target.isReflection(reflection.address)).to.be.true
 			})
 
-			it(`records deployed contract's address to mapping: originalCollectionAddresses`, async function () {
-				const { target, nft, reflection } = await simpleBridgeScenario()
+			it(`records deployed contract's address to mapping: origins`, async function () {
+				const { sourceChainId, target, nft, reflection } = await simpleBridgeScenario()
 
-				const origCollAddr = await target.originalCollectionAddresses(reflection.address)
+				const origin = await target.origins(reflection.address)
 
-				expect(origCollAddr).to.be.eq(nft.address)
+				expect(origin.chainId).to.be.eq(sourceChainId)
+				expect(origin.collectionAddress).to.be.eq(nft.address)
 			})
 		})
 
@@ -165,20 +168,26 @@ export const reflect = function () {
 		})
 
 		it('emits NFTBridged event', async function () {
-			const { tx, target, nft, owner, tokenId } = await simpleBridgeScenario()
-
-			await expect(tx)
-				.to.emit(target, 'NFTBridged')
-				.withArgs(nft.address, anyValue, [tokenId], [await nft.tokenURI(tokenId)], owner.address)
-		})
-
-		it('emits one NFTBridged event for multiple tokens', async function () {
-			const { tx, target, nft, owner, tokenId } = await simpleBridgeMultipleScenario()
+			const { tx, sourceChainId, target, nft, owner, tokenId } = await simpleBridgeScenario()
 
 			await expect(tx)
 				.to.emit(target, 'NFTBridged')
 				.withArgs(
-					nft.address,
+					[sourceChainId, nft.address],
+					anyValue,
+					[tokenId],
+					[await nft.tokenURI(tokenId)],
+					owner.address
+				)
+		})
+
+		it('emits one NFTBridged event for multiple tokens', async function () {
+			const { tx, sourceChainId, target, nft, owner, tokenId } = await simpleBridgeMultipleScenario()
+
+			await expect(tx)
+				.to.emit(target, 'NFTBridged')
+				.withArgs(
+					[sourceChainId, nft.address],
 					anyValue,
 					[tokenId, tokenId + 1, tokenId + 2],
 					[await nft.tokenURI(tokenId), await nft.tokenURI(tokenId + 1), await nft.tokenURI(tokenId + 2)],

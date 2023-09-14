@@ -8,11 +8,12 @@ import {
 	Mirror__factory,
 	ReflectedNFT,
 	ReflectedNFT__factory,
+	MirrorTest__factory,
 } from '../../typechain-types'
 import { deployNFT } from '../NFT/_'
 
 export async function deployBridge() {
-	const Mirror = (await ethers.getContractFactory('Mirror')) as Mirror__factory
+	const Mirror = (await ethers.getContractFactory('MirrorTest')) as MirrorTest__factory
 	const LzEndpointMock = (await ethers.getContractFactory('LZEndpointMock')) as LZEndpointMock__factory
 
 	const sourceNetworkId = 101 // LZ network ID - ethereum
@@ -28,17 +29,22 @@ export async function deployBridge() {
 	const feeReceiver = signers[9].address
 	const feeAmount = 1000000000000000
 
+	const sourceChainId = 1
+	const targetChainId = 1284
+
 	const source = await Mirror.deploy(
 		sourceLzEndpoint.address,
 		feeAmount,
 		feeReceiver,
-		reflectedNFTImplementation.address
+		reflectedNFTImplementation.address,
+		sourceChainId
 	)
 	const target = await Mirror.deploy(
 		targetLzEndpoint.address,
 		feeAmount,
 		feeReceiver,
-		reflectedNFTImplementation.address
+		reflectedNFTImplementation.address,
+		targetChainId
 	)
 
 	await reflectedNFTImplementation.transferOwnership(target.address)
@@ -55,6 +61,8 @@ export async function deployBridge() {
 	return {
 		source,
 		target,
+		sourceChainId,
+		targetChainId,
 		sourceLzEndpoint,
 		targetLzEndpoint,
 		sourceNetworkId,
@@ -78,8 +86,17 @@ export async function deployNFTWithMint() {
 // from ethereum (source) to moonbeam (target)
 // Deploys new reflection contract on target chain
 export async function simpleBridgeScenario(txReturnType: TxReturnType = TxReturnType.awaited) {
-	const { source, target, targetNetworkId, sourceLzEndpoint, targetLzEndpoint, feeReceiver, feeAmount } =
-		await loadFixture(deployBridge)
+	const {
+		source,
+		sourceChainId,
+		target,
+		targetChainId,
+		targetNetworkId,
+		sourceLzEndpoint,
+		targetLzEndpoint,
+		feeReceiver,
+		feeAmount,
+	} = await loadFixture(deployBridge)
 	const { nft, signers, owner } = await loadFixture(deployNFTWithMint)
 
 	await source.changeCollectionEligibility([nft.address], true)
@@ -144,6 +161,8 @@ export async function simpleBridgeScenario(txReturnType: TxReturnType = TxReturn
 	return {
 		source,
 		target,
+		sourceChainId,
+		targetChainId,
 		nft,
 		reflection,
 		tx,
@@ -200,9 +219,18 @@ export async function getAdapterParamsAndFeesAmount(
 // Burns NFT on source (moon) and unlocks original on target (eth)
 export async function bridgeBackScenario(txReturnType: TxReturnType = TxReturnType.awaited) {
 	// eslint-disable-next-line prefer-const
-	let { source, target, targetNetworkId, sourceLzEndpoint, targetLzEndpoint, sourceNetworkId } = await loadFixture(
-		deployBridge
-	)
+	let {
+		source,
+		target,
+		sourceNetworkId,
+		targetNetworkId,
+		sourceLzEndpoint,
+		targetLzEndpoint,
+		// eslint-disable-next-line prefer-const
+		sourceChainId,
+		// eslint-disable-next-line prefer-const
+		targetChainId,
+	} = await loadFixture(deployBridge)
 
 	const { nft, signers, owner } = await loadFixture(deployNFTWithMint)
 
@@ -233,6 +261,7 @@ export async function bridgeBackScenario(txReturnType: TxReturnType = TxReturnTy
 	target = [source, (source = target)][0]
 	targetLzEndpoint = [sourceLzEndpoint, (sourceLzEndpoint = targetLzEndpoint)][0]
 	targetNetworkId = [sourceNetworkId, (sourceNetworkId = targetNetworkId)][0]
+	targetChainId = [sourceChainId, (sourceChainId = targetChainId)][0]
 
 	let tx
 
@@ -294,6 +323,8 @@ export async function bridgeBackScenario(txReturnType: TxReturnType = TxReturnTy
 		tokenId,
 		sourceNetworkId,
 		targetNetworkId,
+		sourceChainId,
+		targetChainId,
 		sourceLzEndpoint,
 		targetLzEndpoint,
 	}
@@ -306,7 +337,8 @@ export async function simpleBridgeMultipleScenario(
 	txReturnType: TxReturnType = TxReturnType.awaited,
 	NFTsToBridge = 3
 ) {
-	const { source, target, targetNetworkId, sourceLzEndpoint, targetLzEndpoint } = await loadFixture(deployBridge)
+	const { source, target, targetNetworkId, sourceLzEndpoint, targetLzEndpoint, sourceChainId, targetChainId } =
+		await loadFixture(deployBridge)
 	const { nft, signers, owner } = await loadFixture(deployNFTWithMint)
 
 	await source.changeCollectionEligibility([nft.address], true)
@@ -386,6 +418,8 @@ export async function simpleBridgeMultipleScenario(
 		owner,
 		tokenId,
 		tokenIds,
+		sourceChainId,
+		targetChainId,
 		targetNetworkId,
 		sourceLzEndpoint,
 		targetLzEndpoint,

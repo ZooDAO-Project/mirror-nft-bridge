@@ -12,6 +12,6 @@ contract DeployClone is ReflectionCreator {
 		string memory name,
 		string memory symbol
 	) public returns (address) {
-		return _deployReflection(originalCollectionAddress, name, symbol);
+		return _deployReflection(Origin(block.chainid, originalCollectionAddress), name, symbol);
 	}
 }

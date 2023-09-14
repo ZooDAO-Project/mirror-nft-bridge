@@ -1,6 +1,7 @@
 import { bridgeWithChangingOwner } from './bridgeWithChangingOwner'
 import { bridgeWithChangingOwnerViaSettingReceiver } from './bridgeWithChangingOwnerViaSettingReceiver'
 import { cheaperRepeatedBridges } from './cheaperRepetingBridges'
+import { oneAddressOnDifferentChains } from './collection-with-same-address-on-different-chains'
 import { complexRoute } from './complexRoute'
 import { meetInTheMiddle } from './meetInTheMiddle'
 
@@ -13,4 +14,5 @@ describe('Special test scenarios', function () {
 		'simultaneous bridge from one network to two others and sending reflection to another reflection contract should make ReflectedNFT contract with 2 NFTs on it',
 		meetInTheMiddle
 	)
+	it('bridging collection that has same address on different chain', oneAddressOnDifferentChains)
 })

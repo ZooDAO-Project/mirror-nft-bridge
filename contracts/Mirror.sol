@@ -33,7 +33,7 @@ contract Mirror is NonblockingLzApp, ReflectionCreator, FeeTaker, IERC721Receive
 
 	/// @dev Triggered in the end of the every bridge of token-reflection
 	event NFTBridged(
-		address originalCollectionAddress,
+		Origin origin,
 		address reflectionAddress,
 		uint256[] tokenIds,
 		string[] tokenURIs,
@@ -44,14 +44,7 @@ contract Mirror is NonblockingLzApp, ReflectionCreator, FeeTaker, IERC721Receive
 	event UnlockedNFT(address originalCollectionAddress, uint256[] tokenIds, address receiver);
 
 	/// @dev Triggered at the start of every bridge process
-	event BridgeNFT(
-		address collection,
-		string name,
-		string symbol,
-		uint256[] tokenId,
-		string[] tokenURI,
-		address receiver
-	);
+	event BridgeNFT(Origin origin, string name, string symbol, uint256[] tokenId, string[] tokenURI, address receiver);
 
 	constructor(
 		address _lzEndpoint,
@@ -81,9 +74,11 @@ contract Mirror is NonblockingLzApp, ReflectionCreator, FeeTaker, IERC721Receive
 	) public view returns (uint nativeFee, uint zroFee) {
 		ReflectedNFT collection = ReflectedNFT(collectionAddr);
 
-		(string memory name, string memory symbol) = getCollectionInfo(collection);
-		string[] memory tokenURIs = getTokenURIs(collection, tokenIds);
-		bytes memory payload = _encodePayload(address(collection), name, symbol, tokenIds, tokenURIs, msg.sender);
+		(string memory name, string memory symbol) = _getCollectionInfo(collection);
+		string[] memory tokenURIs = _getTokenURIs(collection, tokenIds);
+
+		Origin memory origin = Origin(getChainId(), collectionAddr);
+		bytes memory payload = _encodePayload(origin, name, symbol, tokenIds, tokenURIs, msg.sender);
 
 		(nativeFee, zroFee) = lzEndpoint.estimateFees(targetNetworkId, address(this), payload, useZro, adapterParams);
 		nativeFee += feeAmount;
@@ -122,33 +117,32 @@ contract Mirror is NonblockingLzApp, ReflectionCreator, FeeTaker, IERC721Receive
 
 		ReflectedNFT collection = ReflectedNFT(collectionAddr);
 
-		(bool isOriginalCollection, address originalCollectionAddress) = _getOrigins(collectionAddr);
-		// Decides what to do with NFTs that are beigin bridged
-		// Is it reflection (copy)?
-		// 	yes - burn
-		//	no  - lock
+		(bool isOriginalCollection, Origin memory origin) = _getOrigins(collectionAddr);
 
-		// Build message payload
-		(string memory name, string memory symbol) = getCollectionInfo(collection);
-		string[] memory tokenURIs = getTokenURIs(collection, tokenIds);
-		bytes memory payload = _encodePayload(originalCollectionAddress, name, symbol, tokenIds, tokenURIs, receiver);
+		// Gather all data required for bridge
+		(string memory name, string memory symbol) = _getCollectionInfo(collection);
+		string[] memory tokenURIs = _getTokenURIs(collection, tokenIds);
+		bytes memory payload = _encodePayload(origin, name, symbol, tokenIds, tokenURIs, receiver);
 
-		_beforeTokenBridge(isOriginalCollection, collection, tokenIds);
+		// Lock original NFTs or Burn if it is reflections
+		_lockOrBurn(isOriginalCollection, collection, tokenIds);
 
 		_lzSend(targetNetworkId, payload, _refundAddress, _zroPaymentAddress, _adapterParams, msg.value - feeAmount);
 
-		emit BridgeNFT(originalCollectionAddress, name, symbol, tokenIds, tokenURIs, receiver);
+		emit BridgeNFT(origin, name, symbol, tokenIds, tokenURIs, receiver);
 	}
 
-	function getCollectionInfo(ReflectedNFT collection) public view returns (string memory name, string memory symbol) {
+	function _getCollectionInfo(
+		ReflectedNFT collection
+	) internal view returns (string memory name, string memory symbol) {
 		name = collection.name();
 		symbol = collection.symbol();
 	}
 
-	function getTokenURIs(
+	function _getTokenURIs(
 		ReflectedNFT collection,
 		uint[] memory tokenIds
-	) public view returns (string[] memory tokenURIs) {
+	) internal view returns (string[] memory tokenURIs) {
 		tokenURIs = new string[](tokenIds.length);
 
 		for (uint256 i = 0; i < tokenIds.length; i++) {
@@ -159,20 +153,20 @@ contract Mirror is NonblockingLzApp, ReflectionCreator, FeeTaker, IERC721Receive
 
 	function _getOrigins(
 		address collectionAddr
-	) public view returns (bool isOriginalCollectionBeingBridged, address originalCollectionAddress) {
+	) internal view returns (bool isOriginalCollectionBeingBridged, Origin memory origin) {
 		isOriginalCollectionBeingBridged = !isReflection[collectionAddr];
 
 		if (isOriginalCollectionBeingBridged) {
-			originalCollectionAddress = collectionAddr;
+			origin = Origin(getChainId(), collectionAddr);
 		} else {
-			originalCollectionAddress = originalCollectionAddresses[collectionAddr];
+			origin = origins[collectionAddr];
 		}
 	}
 
 	/// @notice Locks original NFTs and burns copies
 	/// @dev Should be called only after getting tokenURIs
 	/// @dev Otherwise burnt reflecions will return error 'Invalid tokenId'
-	function _beforeTokenBridge(bool isOriginalCollection, ReflectedNFT collection, uint[] memory tokenIds) internal {
+	function _lockOrBurn(bool isOriginalCollection, ReflectedNFT collection, uint[] memory tokenIds) internal {
 		// If original - lock on contract
 
 		if (isOriginalCollection) {
@@ -195,7 +189,7 @@ contract Mirror is NonblockingLzApp, ReflectionCreator, FeeTaker, IERC721Receive
 	/// @dev Calles _reflect() to finish bridge process
 	function _nonblockingLzReceive(uint16, bytes memory, uint64, bytes memory payload) internal virtual override {
 		(
-			address originalCollectionAddr,
+			Origin memory origin,
 			string memory name,
 			string memory symbol,
 			uint256[] memory tokenIds,
@@ -203,7 +197,7 @@ contract Mirror is NonblockingLzApp, ReflectionCreator, FeeTaker, IERC721Receive
 			address _owner
 		) = _decodePayload(payload);
 
-		_reflect(originalCollectionAddr, name, symbol, tokenIds, tokenURIs, _owner);
+		_reflect(origin, name, symbol, tokenIds, tokenURIs, _owner);
 	}
 
 	/// @notice Function finishing bridge process
@@ -211,27 +205,27 @@ contract Mirror is NonblockingLzApp, ReflectionCreator, FeeTaker, IERC721Receive
 	/// @notice Uses existing ReflectedNFT contract if collection was bridged to that chain before
 	/// @notice Mints NFT-reflection on ReflectedNFT contract
 	/// @notice Returns (unlocks) NFT to owner if current chain is original for bridged NFT
-	/// @param originalCollectionAddr Address of original collection on original chain as a unique identifier
+	/// @param origin Original collection chainId and address
 	/// @param name name of original collection to mint ReflectedNFT if needed
 	/// @param symbol symbol of original collection to mint ReflectedNFT if needed
 	/// @param tokenIds Array of tokenIds of bridged NFTs to mint exact same tokens or to unlocks it
 	/// @param tokenURIs Array of tokenURIs of bridged NFTs to mint exact same tokens if needed
 	/// @param receiver Address to mint or return token to
 	function _reflect(
-		address originalCollectionAddr,
+		Origin memory origin,
 		string memory name,
 		string memory symbol,
 		uint256[] memory tokenIds,
 		string[] memory tokenURIs,
 		address receiver
 	) internal {
-		bool isOriginalChain = isOriginalChainForCollection[originalCollectionAddr];
+		bool isOriginalChain = getChainId() == origin.chainId;
 
 		if (isOriginalChain) {
 			// Unlock NFT and return to owner
-			_unlockNFTs(originalCollectionAddr, receiver, tokenIds);
+			_unlockNFTs(origin.collectionAddress, receiver, tokenIds);
 		} else {
-			_finishReflectionCreation(originalCollectionAddr, name, symbol, tokenIds, tokenURIs, receiver);
+			_finishReflectionCreation(origin, name, symbol, tokenIds, tokenURIs, receiver);
 		}
 	}
 
@@ -244,7 +238,7 @@ contract Mirror is NonblockingLzApp, ReflectionCreator, FeeTaker, IERC721Receive
 	}
 
 	function _finishReflectionCreation(
-		address originalCollectionAddr,
+		Origin memory origin,
 		string memory name,
 		string memory symbol,
 		uint256[] memory tokenIds,
@@ -252,9 +246,9 @@ contract Mirror is NonblockingLzApp, ReflectionCreator, FeeTaker, IERC721Receive
 		address receiver
 	) internal {
 		// Get ReflectedNFT address from storage (if exists) or deploy new
-		address reflectionAddr = _getReflectionAddress(originalCollectionAddr, name, symbol);
+		address reflectionAddr = _getReflectionAddress(origin, name, symbol);
 
-		// Make eligible to be able to bridge
+		// Make reflection eligible to be able to bridge
 		isEligibleCollection[reflectionAddr] = true;
 
 		// Mint NFT-reflections
@@ -262,21 +256,21 @@ contract Mirror is NonblockingLzApp, ReflectionCreator, FeeTaker, IERC721Receive
 			ReflectedNFT(reflectionAddr).mint(receiver, tokenIds[i], tokenURIs[i]);
 		}
 
-		emit NFTBridged(originalCollectionAddr, reflectionAddr, tokenIds, tokenURIs, receiver);
+		emit NFTBridged(origin, reflectionAddr, tokenIds, tokenURIs, receiver);
 	}
 
 	/// @notice Returns ReflectedNFT address from storage (if exists) or deploy new
 	function _getReflectionAddress(
-		address originalCollectionAddr,
+		Origin memory origin,
 		string memory name,
 		string memory symbol
 	) internal returns (address reflectionAddr) {
-		bool isThereReflectionContract = reflection[originalCollectionAddr] != address(0);
+		bool isThereReflectionContract = reflection[origin.collectionAddress] != address(0);
 
 		if (isThereReflectionContract) {
-			reflectionAddr = reflection[originalCollectionAddr];
+			reflectionAddr = reflection[origin.collectionAddress];
 		} else {
-			reflectionAddr = _deployReflection(originalCollectionAddr, name, symbol);
+			reflectionAddr = _deployReflection(origin, name, symbol);
 		}
 	}
 
@@ -330,14 +324,14 @@ contract Mirror is NonblockingLzApp, ReflectionCreator, FeeTaker, IERC721Receive
 	}
 
 	function _encodePayload(
-		address originalCollectionAddress,
+		Origin memory origin,
 		string memory name,
 		string memory symbol,
 		uint[] memory tokenIds,
 		string[] memory tokenURIs,
 		address receiver
-	) internal pure returns (bytes memory) {
-		return abi.encode(originalCollectionAddress, name, symbol, tokenIds, tokenURIs, receiver);
+	) internal view returns (bytes memory) {
+		return abi.encode(origin, name, symbol, tokenIds, tokenURIs, receiver);
 	}
 
 	function _decodePayload(
@@ -346,7 +340,7 @@ contract Mirror is NonblockingLzApp, ReflectionCreator, FeeTaker, IERC721Receive
 		internal
 		pure
 		returns (
-			address, // originalCollectionAddr
+			Origin memory,
 			string memory, // name
 			string memory, // symbol
 			uint256[] memory, // tokenIds
@@ -354,6 +348,6 @@ contract Mirror is NonblockingLzApp, ReflectionCreator, FeeTaker, IERC721Receive
 			address // receiver
 		)
 	{
-		return abi.decode(payload, (address, string, string, uint256[], string[], address));
+		return abi.decode(payload, (Origin, string, string, uint256[], string[], address));
 	}
 }
