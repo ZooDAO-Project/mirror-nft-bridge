@@ -2,8 +2,8 @@
 
 pragma solidity 0.8.18;
 
-import '@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol';
-import '@openzeppelin/contracts/access/Ownable.sol';
+import '@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721URIStorageUpgradeable.sol';
+import '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
 
 /// @title ReflectedNFT - immitation of original collection contract
 /// @author 0xslava
@@ -12,11 +12,13 @@ import '@openzeppelin/contracts/access/Ownable.sol';
 /// @dev Tokens can be minted and burned by Mirror contract (owner)
 /// @dev Inherits ERC721URIStorage to be able to handle collections with any tokenURI function logic
 /// @dev ERC721URIStorage allows to point to exact same metadata as in original collection
-contract ReflectedNFT is ERC721URIStorage, Ownable {
+contract ReflectedNFT is ERC721URIStorageUpgradeable, OwnableUpgradeable {
 	string internal _name;
 	string internal _symbol;
 
-	constructor(string memory name_, string memory symbol_) ERC721(name_, symbol_) {}
+	constructor() {
+		_disableInitializers();
+	}
 
 	/// @notice Mints NFT with given tokenId and tokenURI
 	/// @notice tokenId and tokenURI are exact same as of original NFT
@@ -31,14 +33,10 @@ contract ReflectedNFT is ERC721URIStorage, Ownable {
 
 	/// @notice Function to be called by minimal proxy clone
 	/// @dev initializes name, symbols, owner
-	function init(string calldata name_, string calldata symbol_) external {
-		require(
-			bytes(_name).length == 0 && bytes(_symbol).length == 0 && owner() == address(0),
-			'ReflectedNFT: already initialized'
-		);
-		_name = name_;
-		_symbol = symbol_;
-		_transferOwnership(msg.sender);
+	function init(string calldata name_, string calldata symbol_) external initializer {
+		__ERC721URIStorage_init();
+		__ERC721_init(name_, symbol_);
+		__Ownable_init();
 	}
 
 	function name() public view override returns (string memory) {
