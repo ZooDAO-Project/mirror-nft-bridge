@@ -259,21 +259,6 @@ contract Mirror is NonblockingLzApp, ReflectionCreator, FeeTaker, IERC721Receive
 		emit NFTBridged(origin, reflectionAddr, tokenIds, tokenURIs, receiver);
 	}
 
-	/// @notice Returns ReflectedNFT address from storage (if exists) or deploy new
-	function _getReflectionAddress(
-		Origin memory origin,
-		string memory name,
-		string memory symbol
-	) internal returns (address reflectionAddr) {
-		bool isThereReflectionContract = reflection[origin.collectionAddress] != address(0);
-
-		if (isThereReflectionContract) {
-			reflectionAddr = reflection[origin.collectionAddress];
-		} else {
-			reflectionAddr = _deployReflection(origin, name, symbol);
-		}
-	}
-
 	/// @notice Updated collection eligibility to given parameter
 	/// @param collections collection addresses
 	/// @param eligibility boolean for eligibilty
@@ -330,7 +315,7 @@ contract Mirror is NonblockingLzApp, ReflectionCreator, FeeTaker, IERC721Receive
 		uint[] memory tokenIds,
 		string[] memory tokenURIs,
 		address receiver
-	) internal view returns (bytes memory) {
+	) internal pure returns (bytes memory) {
 		return abi.encode(origin, name, symbol, tokenIds, tokenURIs, receiver);
 	}
 

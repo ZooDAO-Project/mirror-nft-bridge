@@ -3,7 +3,6 @@
 pragma solidity 0.8.18;
 
 import './ReflectedNFT.sol';
-import 'hardhat/console.sol';
 import '@openzeppelin/contracts/proxy/Clones.sol';
 
 /// @title ReflectionCreator - assisting contract to deploy ReflectedNFT
@@ -16,7 +15,9 @@ abstract contract ReflectionCreator {
 
 	/// @notice Returns ReflectedNFT address on current chain by original collection address as unique identifier
 	/// @dev originalCollectionContract => reflectionCollectionContract
-	mapping(address => address) public reflection;
+	// mapping(address => address) public reflection;
+	/// @dev origChainId => originalCollectionContract => reflectionCollectionContract
+	mapping(uint256 => mapping(address => address)) public reflection;
 
 	/// @notice Returns if collection address on current chain is reflection (copy)
 	/// @dev collectionAddr => isReflection
@@ -38,25 +39,37 @@ abstract contract ReflectionCreator {
 		implementation = _implementation;
 	}
 
+	/// @notice Returns ReflectedNFT address from storage (if exists) or deploy new
+	function _getReflectionAddress(
+		Origin memory origin,
+		string memory name,
+		string memory symbol
+	) internal returns (address reflectionAddr) {
+		reflectionAddr = reflection[origin.chainId][origin.collectionAddress];
+		bool reflectionDoesntExist = reflectionAddr == address(0);
+
+		if (reflectionDoesntExist) {
+			reflectionAddr = _deployReflection(origin, name, symbol);
+		}
+	}
+
 	/// @notice Creates reflection (copy) of oringinal collection with original name and symbol
 	/// @param origin chainId and original collection address
 	/// @param name name of original collection to pass to ReflectedNFT
 	/// @param symbol symbol of original collection to pass to ReflectedNFT
-	/// @return address of deployed ReflectedNFT contract
+	/// @return _reflection - address of deployed ReflectedNFT contract
 	function _deployReflection(
 		Origin memory origin,
 		string memory name,
 		string memory symbol
-	) internal returns (address) {
-		address _reflection = Clones.clone(implementation);
+	) internal returns (address _reflection) {
+		_reflection = Clones.clone(implementation);
 		ReflectedNFT(_reflection).init(name, symbol);
 
-		reflection[origin.collectionAddress] = _reflection;
+		reflection[origin.chainId][origin.collectionAddress] = _reflection;
 		isReflection[_reflection] = true;
 		origins[_reflection] = origin;
 
 		emit NFTReflectionDeployed(_reflection, origin);
-
-		return _reflection;
 	}
 }
