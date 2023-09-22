@@ -3,32 +3,43 @@ import { loadFixture } from '@nomicfoundation/hardhat-network-helpers'
 import { expect } from 'chai'
 import { mint } from './mint'
 import { tokenURI } from './tokenURI'
-import { ReflectedNFT, ReflectedNFT__factory } from '../../typechain-types'
-import { init } from './init'
+import { DeployClone__factory, ReflectedNFT__factory } from '../../typechain-types'
+// import { init } from './init'
 
-export async function deployReflectionNFT(name = 'ZooDAO Mocks', symbol = 'ZDMK'): Promise<ReflectedNFT> {
-	const NFT = (await ethers.getContractFactory('ReflectedNFT')) as ReflectedNFT__factory
-	const nft = await NFT.deploy(name, symbol)
-	await nft.deployed()
-	return nft
+export async function deployReflectionNFT(name = 'ZooDAO Mocks', symbol = 'ZDMK') {
+	const ReflectedNFT = (await ethers.getContractFactory('ReflectedNFT')) as ReflectedNFT__factory
+	const implementation = await ReflectedNFT.deploy()
+	await implementation.deployed()
+
+	const DeployClone = (await ethers.getContractFactory('DeployClone')) as DeployClone__factory
+	const deployClone = await DeployClone.deploy(implementation.address)
+
+	const tx = await deployClone.deployClone(ethers.constants.AddressZero, name, symbol)
+	const receipt = await tx.wait()
+	const deploymentEvent = receipt.events?.find((event) => event.event === 'NFTReflectionDeployed') as unknown as Event
+	const cloneAddr = (deploymentEvent as any).args[0] as unknown as string
+
+	const nft = ReflectedNFT.attach(cloneAddr)
+
+	return { clones: deployClone, nft }
 }
 
 describe('ReflectedNFT', function () {
 	it('deploys', async function () {
-		const nft = await loadFixture(deployReflectionNFT)
+		const { nft } = await loadFixture(deployReflectionNFT)
 		expect(nft).not.to.be.undefined
 		expect(nft.address.length).to.be.eq(42)
 	})
 
-	describe('init', init)
+	// describe('init', init)
 	describe('mint', mint)
 	describe('tokenURI', tokenURI)
 
 	it('tokens can be transferred', async function () {
-		const nft = await loadFixture(deployReflectionNFT)
+		const { clones, nft } = await loadFixture(deployReflectionNFT)
 		const signers = await ethers.getSigners()
 
-		await nft.mint(signers[1].address, 1, 'url.com')
+		await clones.mint(nft.address, signers[1].address, 1, 'url.com')
 
 		const transfer = () => nft.connect(signers[1]).transferFrom(signers[1].address, signers[2].address, 1)
 

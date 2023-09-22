@@ -1,7 +1,7 @@
 import { loadFixture } from '@nomicfoundation/hardhat-network-helpers'
 import { expect } from 'chai'
 import { deployBridge } from './_.fixtures'
-import { DeployClone__factory, MirrorChain__factory } from '../../typechain-types'
+import { DeployClone__factory, Mirror__factory } from '../../typechain-types'
 import { ethers } from 'hardhat'
 
 describe('MirrorTest', function () {
@@ -18,7 +18,7 @@ describe('MirrorTest', function () {
 	})
 
 	it('base Mirror returns actual chainId', async function () {
-		const Mirror = (await ethers.getContractFactory('Mirror')) as MirrorChain__factory
+		const Mirror = (await ethers.getContractFactory('Mirror')) as Mirror__factory
 		const mirror = await Mirror.deploy(
 			ethers.constants.AddressZero,
 			0,

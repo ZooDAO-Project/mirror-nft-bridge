@@ -10,7 +10,6 @@ import {
 	simpleBridgeMultipleScenario,
 } from './_.fixtures'
 import { ethers } from 'hardhat'
-import { ContractTransaction } from 'ethers'
 
 export const reflect = function () {
 	describe('if bridged to original chain', function () {
@@ -50,9 +49,9 @@ export const reflect = function () {
 			})
 
 			it(`records deployed contract's address to mapping: reflection`, async function () {
-				const { target, nft, reflection } = await simpleBridgeScenario()
+				const { target, nft, reflection, sourceChainId } = await simpleBridgeScenario()
 
-				expect(await target.reflection(nft.address)).to.be.eq(reflection.address)
+				expect(await target.reflection(sourceChainId, nft.address)).to.be.eq(reflection.address)
 			})
 
 			it(`records deployed contract's address to mapping: isReflection`, async function () {

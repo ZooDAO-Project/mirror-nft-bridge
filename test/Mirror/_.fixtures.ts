@@ -23,7 +23,7 @@ export async function deployBridge() {
 	const targetLzEndpoint = await LzEndpointMock.deploy(targetNetworkId)
 
 	const ReflectedNFT = (await ethers.getContractFactory('ReflectedNFT')) as ReflectedNFT__factory
-	const reflectedNFTImplementation = await ReflectedNFT.deploy('Reflection Implementation', 'RI')
+	const reflectedNFTImplementation = await ReflectedNFT.deploy()
 
 	const signers = await ethers.getSigners()
 	const feeReceiver = signers[9].address
@@ -46,8 +46,6 @@ export async function deployBridge() {
 		reflectedNFTImplementation.address,
 		targetChainId
 	)
-
-	await reflectedNFTImplementation.transferOwnership(target.address)
 
 	await source.deployed()
 	await target.deployed()
@@ -88,9 +86,10 @@ export async function deployNFTWithMint() {
 export async function simpleBridgeScenario(txReturnType: TxReturnType = TxReturnType.awaited) {
 	const {
 		source,
-		sourceChainId,
 		target,
+		sourceChainId,
 		targetChainId,
+		sourceNetworkId,
 		targetNetworkId,
 		sourceLzEndpoint,
 		targetLzEndpoint,
@@ -153,7 +152,7 @@ export async function simpleBridgeScenario(txReturnType: TxReturnType = TxReturn
 				)
 	}
 
-	const reflectionAddr = await target.reflection(nft.address)
+	const reflectionAddr = await target.reflection(sourceChainId, nft.address)
 
 	const ReflectedNFT = await ethers.getContractFactory('ReflectedNFT')
 	const reflection = ReflectedNFT.attach(reflectionAddr) as ReflectedNFT
@@ -252,7 +251,7 @@ export async function bridgeBackScenario(txReturnType: TxReturnType = TxReturnTy
 		{ value: fees[0] }
 	)
 
-	const reflectionAddr = await target.reflection(nft.address)
+	const reflectionAddr = await target.reflection(sourceChainId, nft.address)
 
 	const ReflectedNFT = await ethers.getContractFactory('ReflectedNFT')
 	const reflection = ReflectedNFT.attach(reflectionAddr) as ReflectedNFT
@@ -403,7 +402,7 @@ export async function simpleBridgeMultipleScenario(
 				)
 	}
 
-	const reflectionAddr = await target.reflection(nft.address)
+	const reflectionAddr = await target.reflection(sourceChainId, nft.address)
 
 	const ReflectedNFT = await ethers.getContractFactory('ReflectedNFT')
 	const reflection = ReflectedNFT.attach(reflectionAddr) as ReflectedNFT
@@ -434,9 +433,16 @@ export async function bridgeBackMultipleScenario(
 	NFTsToBridgeBack = 3
 ) {
 	// eslint-disable-next-line prefer-const
-	let { source, target, targetNetworkId, sourceLzEndpoint, targetLzEndpoint, sourceNetworkId } = await loadFixture(
-		deployBridge
-	)
+	let {
+		source,
+		target,
+		sourceChainId,
+		targetChainId,
+		targetNetworkId,
+		sourceLzEndpoint,
+		targetLzEndpoint,
+		sourceNetworkId,
+	} = await loadFixture(deployBridge)
 
 	const { nft, signers, owner } = await loadFixture(deployNFTWithMint)
 
@@ -467,7 +473,7 @@ export async function bridgeBackMultipleScenario(
 		{ value: fees[0] }
 	)
 
-	const reflectionAddr = await target.reflection(nft.address)
+	const reflectionAddr = await target.reflection(sourceChainId, nft.address)
 
 	const ReflectedNFT = await ethers.getContractFactory('ReflectedNFT')
 	const reflection = ReflectedNFT.attach(reflectionAddr) as ReflectedNFT
@@ -476,6 +482,7 @@ export async function bridgeBackMultipleScenario(
 	target = [source, (source = target)][0]
 	targetLzEndpoint = [sourceLzEndpoint, (sourceLzEndpoint = targetLzEndpoint)][0]
 	targetNetworkId = [sourceNetworkId, (sourceNetworkId = targetNetworkId)][0]
+	targetChainId = [sourceChainId, (sourceChainId = targetChainId)][0]
 
 	let tx
 

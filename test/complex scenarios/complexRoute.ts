@@ -7,7 +7,7 @@ import { NFT } from '../../typechain-types'
 
 export const complexRoute = async function () {
 	const { nft, owner, tokenId } = await loadFixture(deployNFTWithMint)
-	const { ethBridge, moonBridge, arbBridge, networkIds, lzEndpoints } = await loadFixture(deployMultipleBridges)
+	const { ethBridge, moonBridge, arbBridge, networkIds, chainIds } = await loadFixture(deployMultipleBridges)
 	await ethBridge.changeCollectionEligibility([nft.address], true)
 
 	await nft.approve(ethBridge.address, tokenId)
@@ -36,7 +36,7 @@ export const complexRoute = async function () {
 
 	expect(await nft.ownerOf(tokenId)).to.be.eq(ethBridge.address)
 
-	const moonReflectionNftAddr = await moonBridge.reflection(nft.address)
+	const moonReflectionNftAddr = await moonBridge.reflection(chainIds.ethChainId, nft.address)
 	const moonReflection = (await ethers.getContractAt('NFT', moonReflectionNftAddr)) as NFT
 
 	expect(await moonReflection.ownerOf(tokenId)).to.be.eq(owner.address)
@@ -56,7 +56,7 @@ export const complexRoute = async function () {
 
 	expect(await moonReflection.balanceOf(owner.address)).to.be.eq(0)
 
-	const arbReflectionNftAddr = await arbBridge.reflection(nft.address)
+	const arbReflectionNftAddr = await arbBridge.reflection(chainIds.ethChainId, nft.address)
 	const arbReflection = (await ethers.getContractAt('NFT', arbReflectionNftAddr)) as NFT
 
 	expect(await arbReflection.ownerOf(tokenId)).to.be.eq(owner.address)

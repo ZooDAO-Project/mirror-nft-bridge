@@ -26,11 +26,17 @@ export async function deployMultipleBridges() {
 	}
 
 	const ReflectedNFT = (await ethers.getContractFactory('ReflectedNFT')) as ReflectedNFT__factory
-	const reflectedNFTImplementation = await ReflectedNFT.deploy('Reflection Implementation', 'RI')
+	const reflectedNFTImplementation = await ReflectedNFT.deploy()
 
 	const ethChainId = 1
 	const moonChainId = 1284
 	const arbChainId = 42161
+
+	const chainIds = {
+		ethChainId,
+		moonChainId,
+		arbChainId,
+	}
 
 	const signers = await ethers.getSigners()
 	const feeReceiver = signers[9].address
@@ -56,8 +62,6 @@ export async function deployMultipleBridges() {
 		reflectedNFTImplementation.address,
 		arbChainId
 	)
-
-	await reflectedNFTImplementation.transferOwnership(ethBridge.address)
 
 	await ethBridge.deployed()
 	await moonBridge.deployed()
@@ -89,5 +93,5 @@ export async function deployMultipleBridges() {
 	await arbBridge.setTrustedRemoteAddress(ethNetworkId, ethBridge.address)
 	await arbBridge.setTrustedRemoteAddress(moonNetworkId, moonBridge.address)
 
-	return { ethBridge, moonBridge, arbBridge, networkIds, lzEndpoints, signers }
+	return { ethBridge, moonBridge, arbBridge, networkIds, lzEndpoints, signers, chainIds }
 }

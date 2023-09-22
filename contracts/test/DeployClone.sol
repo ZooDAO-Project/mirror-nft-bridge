@@ -14,4 +14,8 @@ contract DeployClone is ReflectionCreator {
 	) public returns (address) {
 		return _deployReflection(Origin(block.chainid, originalCollectionAddress), name, symbol);
 	}
+
+	function mint(address proxy, address to, uint256 tokenId, string memory tokenURI) public {
+		ReflectedNFT(proxy).mint(to, tokenId, tokenURI);
+	}
 }

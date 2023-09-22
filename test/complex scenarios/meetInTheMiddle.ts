@@ -7,7 +7,7 @@ import { expectToBeRevertedWith } from '../_utils'
 
 export const meetInTheMiddle = async function () {
 	const { nft, owner, tokenId } = await loadFixture(deployNFTWithMint)
-	const { ethBridge, moonBridge, arbBridge, networkIds, lzEndpoints } = await loadFixture(deployMultipleBridges)
+	const { ethBridge, moonBridge, arbBridge, networkIds, chainIds } = await loadFixture(deployMultipleBridges)
 	await ethBridge.changeCollectionEligibility([nft.address], true)
 
 	await nft.mint(owner.address, 1)
@@ -52,9 +52,9 @@ export const meetInTheMiddle = async function () {
 	expect(await nft.ownerOf(tokenId)).to.be.eq(ethBridge.address)
 	expect(await nft.ownerOf(tokenId + 1)).to.be.eq(ethBridge.address)
 
-	const arbReflectionAddr = await arbBridge.reflection(nft.address)
+	const arbReflectionAddr = await arbBridge.reflection(chainIds.ethChainId, nft.address)
 
-	const moonReflectionNftAddr = await moonBridge.reflection(nft.address)
+	const moonReflectionNftAddr = await moonBridge.reflection(chainIds.ethChainId, nft.address)
 	const moonReflection = await ethers.getContractAt('ReflectedNFT', moonReflectionNftAddr)
 
 	await moonBridge.createReflection(

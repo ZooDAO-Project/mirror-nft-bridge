@@ -7,10 +7,10 @@ import { ethers } from 'hardhat'
 
 export const mint = function () {
 	it('mint tokens', async function () {
-		const nft = await loadFixture(deployReflectionNFT)
+		const { clones, nft } = await loadFixture(deployReflectionNFT)
 		const signers = await ethers.getSigners()
 
-		const mint = () => nft.mint(signers[1].address, 1, 'url.com')
+		const mint = () => clones.mint(nft.address, signers[1].address, 1, 'url.com')
 
 		await expect(mint).to.changeTokenBalance(nft, signers[1], 1)
 	})
@@ -20,6 +20,6 @@ export const mint = function () {
 
 		const tx = reflection.mint(owner.address, 111, 'url.com')
 
-		expectToBeRevertedWith(tx, 'Ownable: caller is not the owner')
+		await expectToBeRevertedWith(tx, 'Ownable: caller is not the owner')
 	})
 }

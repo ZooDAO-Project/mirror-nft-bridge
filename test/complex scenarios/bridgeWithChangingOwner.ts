@@ -7,7 +7,7 @@ import { NFT } from '../../typechain-types'
 
 export const bridgeWithChangingOwner = async function () {
 	const { nft, owner, tokenId, signers } = await loadFixture(deployNFTWithMint)
-	const { ethBridge, moonBridge, networkIds, lzEndpoints } = await loadFixture(deployMultipleBridges)
+	const { ethBridge, moonBridge, networkIds, chainIds } = await loadFixture(deployMultipleBridges)
 
 	await ethBridge.changeCollectionEligibility([nft.address], true)
 
@@ -40,7 +40,7 @@ export const bridgeWithChangingOwner = async function () {
 
 	expect(await nft.ownerOf(tokenId)).to.be.eq(ethBridge.address)
 
-	const moonReflectionNftAddr = await moonBridge.reflection(nft.address)
+	const moonReflectionNftAddr = await moonBridge.reflection(chainIds.ethChainId, nft.address)
 	const moonReflection = (await ethers.getContractAt('NFT', moonReflectionNftAddr)) as NFT
 
 	expect(await moonReflection.ownerOf(tokenId)).to.be.eq(owner.address)
