@@ -6,9 +6,9 @@ export const bridgeAddresses = {
 		arbitrum: '',
 	},
 	production: {
-		ethereum: '0x6668516859dD2e94Fe630a0370ae9986FA1902d6',
-		moonbeam: '0x36a65778e80Aa9E0BFe4458a049536FE66cec8a0',
-		arbitrum: '0xB96050683438028FF4057fd99270EcA95e9103Ed',
+		ethereum: '0xbF92d04Bf6E2065d60eA9d28608C70a30F7A1c8E',
+		moonbeam: '0x78aBBA81C50888ec4D12d5749941351e6C28a09F',
+		arbitrum: '0x577405E2ef14C6f1bf18da3C3C4cbf50bcD5a719',
 		fantom: '',
 	},
 }
