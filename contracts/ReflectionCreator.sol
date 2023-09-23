@@ -63,7 +63,7 @@ abstract contract ReflectionCreator {
 		string memory name,
 		string memory symbol
 	) internal returns (address _reflection) {
-		_reflection = Clones.clone(implementation);
+		_reflection = Clones.cloneDeterministic(implementation, keccak256(abi.encode(origin)));
 		ReflectedNFT(_reflection).init(name, symbol);
 
 		reflection[origin.chainId][origin.collectionAddress] = _reflection;
@@ -71,5 +71,9 @@ abstract contract ReflectionCreator {
 		origins[_reflection] = origin;
 
 		emit NFTReflectionDeployed(_reflection, origin);
+	}
+
+	function predictReflectionAddress(Origin memory origin) public view returns (address) {
+		return Clones.predictDeterministicAddress(implementation, keccak256(abi.encode(origin)));
 	}
 }

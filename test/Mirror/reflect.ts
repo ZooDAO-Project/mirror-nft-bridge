@@ -201,4 +201,16 @@ export const reflect = function () {
 
 		await expect(tx).to.changeTokenBalance(nft, owner, 10)
 	})
+
+	it.only('deploys reflection to predetermined address', async function () {
+		const { source, target, nft, sourceChainId } = await simpleBridgeScenario(TxReturnType.awaited)
+
+		const predictedReflectionAddr = await target.predictReflectionAddress({
+			chainId: sourceChainId,
+			collectionAddress: nft.address,
+		})
+
+		const actualReflectionAddress = await target.reflection(sourceChainId, nft.address)
+		expect(actualReflectionAddress).to.be.eq(predictedReflectionAddr)
+	})
 }
