@@ -1,8 +1,6 @@
 import CHAIN_ID from '../constants/chainIds.json'
-import LzEndpoints from '../constants/LzEndpoints.json'
 import { HardhatRuntimeEnvironment } from 'hardhat/types'
-import { Mirror, LZEndpointMock, NFT, ONFT721 } from '../typechain-types'
-import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
+import { Mirror, NFT, ONFT721 } from '../typechain-types'
 import { ethers } from 'ethers'
 import { log } from 'console'
 import { bridgeAddresses } from '../constants/bridgeAddresses'
@@ -34,36 +32,37 @@ export async function createReflection(taskArgs: any, hre: HardhatRuntimeEnviron
 	console.log(`source ${localBridgeAddress}\nremote ${remoteBridgeAddress}`)
 	const source = Mirror.attach(localBridgeAddress) as Mirror
 
-	const target = Mirror.attach(remoteBridgeAddress) as Mirror
+	// const target = Mirror.attach(remoteBridgeAddress) as Mirror
 
 	const nft = NFT.attach(taskArgs.collection) as NFT
 
 	const tx = await nft.approve(source.address, taskArgs.tokenId)
 	await tx.wait()
 
-	const targetNetworkProviderUrl: string = (hre.config.networks[taskArgs.targetNetwork] as any)['url']
-	const targetNetworkProvider = ethers.getDefaultProvider(targetNetworkProviderUrl)
+	// const targetNetworkProviderUrl: string = (hre.config.networks[taskArgs.targetNetwork] as any)['url']
+	// const targetNetworkProvider = ethers.getDefaultProvider(targetNetworkProviderUrl)
 
-	const isReflectionDeployed =
-		(await target.connect(targetNetworkProvider).reflection(taskArgs.collection)) !== ethers.constants.AddressZero
+	// const isReflectionDeployed =
+	// 	(await target.connect(targetNetworkProvider).reflection(taskArgs.collection)) !== ethers.constants.AddressZero
 
 	const { fees, adapterParams } = await getAdapterParamsAndFeesAmount(
 		nft,
 		taskArgs.tokenId,
 		remoteChainId,
-		source,
-		isReflectionDeployed
+		source
+		// isReflectionDeployed
 	)
 
 	console.log(`fees[0] (wei): ${fees[0]} / (eth): ${hre.ethers.utils.formatEther(fees[0])}`)
 	try {
 		const tx = await source.createReflection(
 			taskArgs.collection, // 'from' address to send tokens
-			[taskArgs.tokenId],
+			[taskArgs.tokenId], // tokenId to send
 			remoteChainId, // remote LayerZero chainId
 			owner.address, // 'to' address to send tokens
-			hre.ethers.constants.AddressZero, // tokenId to send
-			adapterParams, // refund address (if too much message fee is sent, it gets refunded)
+			owner.address, // refund address (if too much message fee is sent, it gets refunded)
+			hre.ethers.constants.AddressZero, // zroPaymentAddr
+			adapterParams,
 			{ value: fees[0] }
 		)
 		console.log(
@@ -86,13 +85,13 @@ export async function getAdapterParamsAndFeesAmount(
 	nft: ONFT721 | NFT,
 	tokenId: number,
 	targetNetworkId: number,
-	sourceBridge: Mirror,
-	isReflectionDeployed: boolean
+	sourceBridge: Mirror
+	// isReflectionDeployed: boolean
 ) {
-	const GasWithDeploy = '2100000'
-	const GasOnRegularBridge = '400000'
+	// const GasWithDeploy = '2100000'
+	const GasOnRegularBridge = '500000'
 
-	const RecommendedGas = isReflectionDeployed ? GasOnRegularBridge : GasWithDeploy
+	const RecommendedGas = GasOnRegularBridge
 	console.log('Gas expenditure on remote tx: ', Number(RecommendedGas) / 1000 + 'k')
 
 	const adapterParams = ethers.utils.solidityPack(['uint16', 'uint256'], [1, RecommendedGas]) // default adapterParams example
