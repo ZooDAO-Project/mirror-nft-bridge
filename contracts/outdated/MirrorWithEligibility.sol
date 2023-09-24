@@ -2,26 +2,30 @@
 
 pragma solidity 0.8.18;
 
-import './ReflectionCreator.sol';
+import '../ReflectionCreator.sol';
 import '@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol';
 import '@layerzerolabs/solidity-examples/contracts/lzApp/NonblockingLzApp.sol';
-import './FeeTaker.sol';
+import '../FeeTaker.sol';
 
 /// @title NFT bridge named Mirror
 /// @author 0xslava
 /// @notice Mirror bridges NFTs to other supported chains
 /// @notice Bridge process named "creating reflection"
 /// @notice Copy of NFT collections are called "reflections"
+/// @notice Can reflect only eligible NFT collections
 /// @notice Can reflect NFT to any chain, where Mirror contracts exists and connnected
 /// @dev When collection bridged from source to target chain for the first time - deploys ReflectedNFT contract
 /// @dev If collection was already bridged to target chain before - uses existing ReflectedNFT contract
 /// @dev For creating ReflectedNFT contracts uses original collection's name and symbol
-contract Mirror is NonblockingLzApp, ReflectionCreator, FeeTaker, IERC721Receiver {
+contract MirrorWithEligibility is NonblockingLzApp, ReflectionCreator, FeeTaker, IERC721Receiver {
 	/// @notice Limit for amount of tokens being bridged in single transaction
 	uint256 public reflectionAmountLimit = 10;
 
 	/// @dev Used in createReflection() and _reflect() functions to determine if collection address is original for that chain
 	mapping(address => bool) public isOriginalChainForCollection;
+
+	/// @notice Checks if collection eligible to bridge
+	mapping(address => bool) public isEligibleCollection;
 
 	/* EVENTS */
 	/// @dev Triggered on NFT being transfered from user to lock it on contract if collection is original
@@ -104,6 +108,7 @@ contract Mirror is NonblockingLzApp, ReflectionCreator, FeeTaker, IERC721Receive
 		address _zroPaymentAddress,
 		bytes memory _adapterParams
 	) public payable {
+		require(isEligibleCollection[collectionAddr], 'Mirror: collection is not eligible');
 		require(tokenIds.length > 0, "Mirror: tokenIds weren't provided");
 		require(tokenIds.length <= reflectionAmountLimit, "Mirror: can't reflect more than limit");
 		require(receiver != address(0), "Mirror: receiver can't be zero address");
@@ -243,12 +248,25 @@ contract Mirror is NonblockingLzApp, ReflectionCreator, FeeTaker, IERC721Receive
 		// Get ReflectedNFT address from storage (if exists) or deploy new
 		address reflectionAddr = _getReflectionAddress(origin, name, symbol);
 
+		// Make reflection eligible to be able to bridge
+		isEligibleCollection[reflectionAddr] = true;
+
 		// Mint NFT-reflections
 		for (uint256 i = 0; i < tokenIds.length; i++) {
 			ReflectedNFT(reflectionAddr).mint(receiver, tokenIds[i], tokenURIs[i]);
 		}
 
 		emit NFTBridged(origin, reflectionAddr, tokenIds, tokenURIs, receiver);
+	}
+
+	/// @notice Updated collection eligibility to given parameter
+	/// @param collections collection addresses
+	/// @param eligibility boolean for eligibilty
+	/// @dev only owner can call
+	function changeCollectionEligibility(address[] calldata collections, bool eligibility) external onlyOwner {
+		for (uint i = 0; i < collections.length; i++) {
+			isEligibleCollection[collections[i]] = eligibility;
+		}
 	}
 
 	/// @notice Changes limit for bridging batch of tokens
