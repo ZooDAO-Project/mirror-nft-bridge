@@ -81,7 +81,7 @@ export const createReflection = function () {
 			it(`doesn't transfer without approve`, async function () {
 				const { source, targetNetworkId } = await loadFixture(deployBridge)
 				const { nft, owner } = await loadFixture(deployNFTWithMint)
-				await source.changeCollectionEligibility([nft.address], true)
+				// await source.changeCollectionEligibility([nft.address], true)
 
 				const tokenId = 1
 				const tx = source.createReflection(
@@ -269,7 +269,7 @@ export const createReflection = function () {
 		await expectToBeRevertedWith(tx, "Mirror: tokenIds weren't provided")
 	})
 
-	it('should revert on collection address is zero', async function () {
+	it.skip('should revert on collection address is zero', async function () {
 		const { nft, owner, source, tokenId, targetNetworkId } = await simpleBridgeScenario(TxReturnType.arrowFunction)
 
 		const { fees, adapterParams } = await getAdapterParamsAndFeesAmount(

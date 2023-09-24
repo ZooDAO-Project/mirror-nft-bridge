@@ -9,8 +9,8 @@ export const oneAddressOnDifferentChains = async function () {
 	const { nft, owner, tokenId, signers } = await loadFixture(deployNFTWithMint)
 	const { ethBridge, moonBridge, networkIds, chainIds } = await loadFixture(deployMultipleBridges)
 
-	await ethBridge.changeCollectionEligibility([nft.address], true)
-	await moonBridge.changeCollectionEligibility([nft.address], true)
+	// await ethBridge.changeCollectionEligibility([nft.address], true)
+	// await moonBridge.changeCollectionEligibility([nft.address], true)
 
 	await nft.approve(ethBridge.address, tokenId)
 

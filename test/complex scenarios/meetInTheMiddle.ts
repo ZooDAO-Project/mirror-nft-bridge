@@ -8,7 +8,7 @@ import { expectToBeRevertedWith } from '../_utils'
 export const meetInTheMiddle = async function () {
 	const { nft, owner, tokenId } = await loadFixture(deployNFTWithMint)
 	const { ethBridge, moonBridge, arbBridge, networkIds, chainIds } = await loadFixture(deployMultipleBridges)
-	await ethBridge.changeCollectionEligibility([nft.address], true)
+	// await ethBridge.changeCollectionEligibility([nft.address], true)
 
 	await nft.mint(owner.address, 1)
 	await nft.setApprovalForAll(ethBridge.address, true)

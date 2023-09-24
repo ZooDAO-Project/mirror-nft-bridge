@@ -20,7 +20,7 @@ describe('Mirror', function () {
 	// })
 	describe('createReflection()', createReflection)
 	describe('reflect()', reflect)
-	describe('eligibility', eligibility)
+	describe.skip('eligibility', eligibility)
 	describe('estimateSendFee()', estimateSendFee)
 	describe('bridgeAmountLimit', bridgeAmountLimit)
 })

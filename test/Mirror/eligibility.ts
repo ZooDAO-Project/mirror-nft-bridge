@@ -33,7 +33,7 @@ export const eligibility = async function () {
 
 		await expectToBeRevertedWith(tx, 'Mirror: collection is not eligible')
 
-		await source.changeCollectionEligibility([nft.address], true)
+		// await source.changeCollectionEligibility([nft.address], true)
 
 		tx = source.createReflection(
 			nft.address,
@@ -53,6 +53,6 @@ export const eligibility = async function () {
 		const { source, targetNetworkId } = await loadFixture(deployBridge)
 		// const { nft, owner, tokenId } = await loadFixture(deployNFTWithMint)
 
-		await source.changeCollectionEligibility((collections as any).default, true)
+		// await source.changeCollectionEligibility((collections as any).default, true)
 	})
 }

@@ -8,7 +8,7 @@ import { NFT } from '../../typechain-types'
 export const complexRoute = async function () {
 	const { nft, owner, tokenId } = await loadFixture(deployNFTWithMint)
 	const { ethBridge, moonBridge, arbBridge, networkIds, chainIds } = await loadFixture(deployMultipleBridges)
-	await ethBridge.changeCollectionEligibility([nft.address], true)
+	// await ethBridge.changeCollectionEligibility([nft.address], true)
 
 	await nft.approve(ethBridge.address, tokenId)
 
