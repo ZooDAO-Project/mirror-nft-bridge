@@ -13,9 +13,6 @@ import '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
 /// @dev Inherits ERC721URIStorage to be able to handle collections with any tokenURI function logic
 /// @dev ERC721URIStorage allows to point to exact same metadata as in original collection
 contract ReflectedNFT is ERC721URIStorageUpgradeable, OwnableUpgradeable {
-	string internal _name;
-	string internal _symbol;
-
 	constructor() {
 		_disableInitializers();
 	}
@@ -34,20 +31,9 @@ contract ReflectedNFT is ERC721URIStorageUpgradeable, OwnableUpgradeable {
 	/// @notice Function to be called by minimal proxy clone
 	/// @dev initializes name, symbols, owner
 	function init(string calldata name_, string calldata symbol_) external initializer {
-		__ERC721URIStorage_init();
-		__ERC721_init(name_, symbol_);
 		__Ownable_init();
-	}
-
-	function name() public view override returns (string memory) {
-		return _name;
-	}
-
-	/**
-	 * @dev See {IERC721Metadata-symbol}.
-	 */
-	function symbol() public view override returns (string memory) {
-		return _symbol;
+		__ERC721_init(name_, symbol_);
+		__ERC721URIStorage_init();
 	}
 
 	/// @notice Destroys NFT reflection (copy) on bridge
