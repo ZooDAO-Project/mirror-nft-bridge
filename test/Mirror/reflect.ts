@@ -39,6 +39,27 @@ export const reflect = function () {
 	})
 
 	describe('else bridged to non-original chain', function () {
+		it(`deploys proxy to ReflectedNFT with correct name and symbols`, async function () {
+			const { target, nft, sourceChainId } = await simpleBridgeScenario(TxReturnType.awaited)
+
+			const reflectionAddr = await target.reflection(sourceChainId, nft.address)
+			const ReflectedNFT = await ethers.getContractFactory('ReflectedNFT')
+			const reflection = ReflectedNFT.attach(reflectionAddr)
+
+			expect(await reflection.name()).to.be.eq(await nft.name())
+			expect(await reflection.symbol()).to.be.eq(await nft.symbol())
+		})
+
+		it(`inits correct owner to reflection contract`, async function () {
+			const { target, nft, sourceChainId } = await simpleBridgeScenario(TxReturnType.awaited)
+
+			const reflectionAddr = await target.reflection(sourceChainId, nft.address)
+			const ReflectedNFT = await ethers.getContractFactory('ReflectedNFT')
+			const reflection = ReflectedNFT.attach(reflectionAddr)
+
+			expect(await reflection.owner()).to.be.eq(target.address)
+		})
+
 		describe(`if reflection contract doesn't exist`, function () {
 			it(`deploys new NFT contract for bridged tokens`, async function () {
 				const { target, nft, tx, sourceChainId } = await simpleBridgeScenario()
