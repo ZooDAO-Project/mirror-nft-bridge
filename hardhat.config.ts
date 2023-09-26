@@ -27,7 +27,7 @@ task('createReflection', 'send NFT (or ReflectedNFT) to another chain', createRe
 	.addParam('collection', 'collection address')
 	.addParam('tokenId', 'uint256 tokenId')
 	.addOptionalParam('targetNetwork', 'Name of target network')
-	.addOptionalParam('mode', 'test or production')
+// .addOptionalParam('mode', 'test or production')
 
 task(
 	'setTrustedRemote',
@@ -163,7 +163,7 @@ const config: HardhatUserConfig = {
 			accounts: accounts(),
 		},
 		moonbeam: {
-			url: `https://1rpc.io/glmr`,
+			url: `https://moonbeam.public.blastapi.io`,
 			chainId: 1284,
 			accounts: accounts(),
 		},
