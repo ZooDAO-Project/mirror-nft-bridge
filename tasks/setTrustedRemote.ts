@@ -2,6 +2,7 @@ import { HardhatRuntimeEnvironment } from 'hardhat/types'
 
 import CHAIN_ID from '../constants/chainIds.json'
 import { bridgeAddresses } from '../constants/bridgeAddresses'
+import { SupportedNetwork } from './createReflection'
 
 export async function setTrustedRemote(taskArgs: any, hre: HardhatRuntimeEnvironment) {
 	// get remote chain id
@@ -13,11 +14,11 @@ export async function setTrustedRemote(taskArgs: any, hre: HardhatRuntimeEnviron
 
 	const network = hre.network.name as keyof typeof bridgeAddresses.production
 
-	console.log(bridgeAddresses.production[network])
-	console.log(bridgeAddresses.production[targetNetwork as keyof typeof bridgeAddresses.production])
+	console.log(bridgeAddresses.production[network].Mirror)
+	console.log(bridgeAddresses.production[targetNetwork as SupportedNetwork].Mirror)
 
-	const source = Mirror.attach(bridgeAddresses.production[network])
-	const target = Mirror.attach(bridgeAddresses.production[targetNetwork as keyof typeof bridgeAddresses.production])
+	const source = Mirror.attach(bridgeAddresses.production[network].Mirror)
+	const target = Mirror.attach(bridgeAddresses.production[targetNetwork as SupportedNetwork].Mirror)
 
 	// concat remote and local address
 	const remoteAndLocal = hre.ethers.utils.solidityPack(['address', 'address'], [target.address, source.address])

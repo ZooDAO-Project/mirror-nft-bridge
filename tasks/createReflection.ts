@@ -5,7 +5,7 @@ import { ethers } from 'ethers'
 import { log } from 'console'
 import { bridgeAddresses } from '../constants/bridgeAddresses'
 
-type SupportedNetwork = 'ethereum' | 'moonbeam' | 'fantom' | 'arbitrum'
+export type SupportedNetwork = 'ethereum' | 'moonbeam' | 'arbitrum'
 
 export async function createReflection(taskArgs: any, hre: HardhatRuntimeEnvironment) {
 	const signers = await hre.ethers.getSigners()
@@ -24,10 +24,9 @@ export async function createReflection(taskArgs: any, hre: HardhatRuntimeEnviron
 
 	const NFT = await hre.ethers.getContractFactory('NFT')
 
-	const mode: keyof typeof bridgeAddresses = taskArgs.mode || 'test'
 	const network = hre.network.name as SupportedNetwork
-	const localBridgeAddress = bridgeAddresses[mode][network]
-	const remoteBridgeAddress = bridgeAddresses[mode][targetNetwork as SupportedNetwork]
+	const localBridgeAddress = bridgeAddresses.production[network as SupportedNetwork].Mirror
+	const remoteBridgeAddress = bridgeAddresses.production[targetNetwork as SupportedNetwork].Mirror
 
 	console.log(`source ${localBridgeAddress}\nremote ${remoteBridgeAddress}`)
 	const source = Mirror.attach(localBridgeAddress) as Mirror
