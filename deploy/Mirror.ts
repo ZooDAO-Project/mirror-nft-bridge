@@ -7,7 +7,8 @@ import hre, { ethers, network } from 'hardhat'
 import { verifyContract } from '../utils/verifyContract'
 import LzEndpoints from '../constants/LzEndpoints.json'
 import { log } from 'console'
-import { Mirror__factory, ReflectedNFT__factory } from '../typechain-types'
+import { Mirror__factory } from '../typechain-types'
+import { bridgeAddresses } from '../constants/bridgeAddresses'
 
 async function main() {
 	// Hardhat always runs the compile task when running scripts with its command
@@ -21,16 +22,18 @@ async function main() {
 	const feeAmount = 0
 	const feeReceiver = '0x73f6D60439046681f4Ce35665583a39f25E138B0'
 
-	const ReflectedNFT = (await ethers.getContractFactory('ReflectedNFT')) as unknown as ReflectedNFT__factory
-	const nftImplementation = await ReflectedNFT.deploy()
-
 	// We get the contract to deploy
+	const network = hre.network.name as keyof typeof LzEndpoints
 	const Mirror = (await ethers.getContractFactory('Mirror')) as unknown as Mirror__factory
-	const lzEndpoint: string = LzEndpoints[hre.network.name as keyof typeof LzEndpoints]
+	const lzEndpoint: string = LzEndpoints[network]
+	const reflectedNFTImplementation: string =
+		bridgeAddresses.production[network as keyof typeof bridgeAddresses.production].ReflectedNFT
+
 	log('LzEndpoint', lzEndpoint)
+	log('ReflectedNFT', reflectedNFTImplementation)
 
 	// const bridge = Mirror.attach('0x36a65778e80Aa9E0BFe4458a049536FE66cec8a0')
-	const bridge = await Mirror.deploy(lzEndpoint, feeAmount, feeReceiver, nftImplementation.address)
+	const bridge = await Mirror.deploy(lzEndpoint, feeAmount, feeReceiver, reflectedNFTImplementation)
 
 	await bridge.deployed()
 
@@ -40,7 +43,7 @@ async function main() {
 
 	await verifyContract(
 		bridge.address,
-		[lzEndpoint, feeAmount, feeReceiver, nftImplementation.address],
+		[lzEndpoint, feeAmount, feeReceiver, reflectedNFTImplementation],
 		'contracts/Mirror.sol:Mirror'
 	)
 }
