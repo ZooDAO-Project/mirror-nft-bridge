@@ -5,6 +5,7 @@ import '@nomicfoundation/hardhat-toolbox'
 import 'hardhat-gas-reporter'
 import 'hardhat-tracer'
 import 'solidity-docgen'
+// import '@tenderly/hardhat-tenderly'
 
 import { setTrustedRemote } from './tasks/setTrustedRemote'
 import { hasStoredPayload } from './tasks/hasStoredPayload'

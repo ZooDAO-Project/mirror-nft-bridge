@@ -6,9 +6,17 @@ export const bridgeAddresses = {
 		arbitrum: '',
 	},
 	production: {
-		ethereum: '0xbF92d04Bf6E2065d60eA9d28608C70a30F7A1c8E',
-		moonbeam: '0x78aBBA81C50888ec4D12d5749941351e6C28a09F',
-		arbitrum: '0x577405E2ef14C6f1bf18da3C3C4cbf50bcD5a719',
-		fantom: '',
+		ethereum: {
+			Mirror: '0x9314cE96286d6529F5b5c325Af78b8aA4A8E5576',
+			ReflectedNFT: '0x02B21Bf3f7c88AB6E62a36ed08997cF5a99a61fA',
+		},
+		moonbeam: {
+			Mirror: '0x4Cb6C67CAF91e1c3EB2d0E6F15bD7e50f63AF81e',
+			ReflectedNFT: '0x00E1F27df44664655D28dE2afe05625db0d70293',
+		},
+		arbitrum: {
+			Mirror: '0xCf374dBe799523b0287256722e2565F69bd6A1C2',
+			ReflectedNFT: '0x57feEd97BA9a7CAb3cE604fc4F4Be48f90bBAcfF',
+		},
 	},
 }

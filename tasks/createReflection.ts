@@ -25,10 +25,10 @@ export async function createReflection(taskArgs: any, hre: HardhatRuntimeEnviron
 	const NFT = await hre.ethers.getContractFactory('NFT')
 
 	const network = hre.network.name as SupportedNetwork
-	const localBridgeAddress = bridgeAddresses.production[network as SupportedNetwork].Mirror
-	const remoteBridgeAddress = bridgeAddresses.production[targetNetwork as SupportedNetwork].Mirror
 
-	console.log(`source ${localBridgeAddress}\nremote ${remoteBridgeAddress}`)
+	const localBridgeAddress = '0xC5d9710763B3Fb08F0062AaA91623CBaBeA280ed'
+	// const localBridgeAddress = bridgeAddresses.production[network as SupportedNetwork].Mirror
+
 	const source = Mirror.attach(localBridgeAddress) as Mirror
 
 	// const target = Mirror.attach(remoteBridgeAddress) as Mirror
@@ -58,7 +58,8 @@ export async function createReflection(taskArgs: any, hre: HardhatRuntimeEnviron
 			taskArgs.collection, // 'from' address to send tokens
 			[taskArgs.tokenId], // tokenId to send
 			remoteChainId, // remote LayerZero chainId
-			owner.address, // 'to' address to send tokens
+			'0x47515585ef943f8e56c17ba0f50fb7e28ce1c4dc',
+			// owner.address, // 'to' address to send tokens
 			owner.address, // refund address (if too much message fee is sent, it gets refunded)
 			hre.ethers.constants.AddressZero, // zroPaymentAddr
 			adapterParams,

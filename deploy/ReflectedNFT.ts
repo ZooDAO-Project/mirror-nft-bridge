@@ -5,6 +5,7 @@
 // Runtime Environment's members available in the global scope.
 import hre, { ethers } from 'hardhat'
 import { verifyContract } from '../utils/verifyContract'
+import { ReflectedNFT__factory } from '../typechain-types'
 
 async function main() {
 	// Hardhat always runs the compile task when running scripts with its command
@@ -15,13 +16,13 @@ async function main() {
 	await hre.run('compile')
 
 	// We get the contract to deploy
-	const NFT = await ethers.getContractFactory('ReflectedNFT')
-	// const nft = await NFT.deploy('Фкишекгь ZooDAO Test Collection', 'MZDTC')
-	const nft = NFT.attach('0x9ceae626797cfAF7632872C4E006aC0Db9DE8e00')
+	const NFT = (await ethers.getContractFactory('ReflectedNFT')) as ReflectedNFT__factory
+	const nft = await NFT.deploy()
+	// const nft = NFT.attach('0x9ceae626797cfAF7632872C4E006aC0Db9DE8e00')
 
 	await nft.deployed()
 
-	console.log('NFT deployed to:', nft.address)
+	console.log('ReflectedNFT deployed to:', nft.address)
 
 	// const nft = { address: '0xcf374dbe799523b0287256722e2565f69bd6a1c2' }
 
